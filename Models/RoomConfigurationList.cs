@@ -12,60 +12,18 @@ public static class RoomConfigurationList
     /// </summary>
     public static ObservableCollection<RoomConfiguration> Rooms { get; } = new()
     {
+ 
         new RoomConfiguration
         {
-            GroupName = "测试组",
-            RoomName = "测试房间1",
-            TestIp = "100.100.0.1",
-            ServerConfig = """
-                dhcp = true
-                listeners = [
-                    "tcp://0.0.0.0:11010",
-                    "udp://0.0.0.0:11010",
-                ]
-
-                [network_identity]
-                network_name = "123qwe"
-                network_secret = "123qwe"
-
-                [[peer]]
-                uri = "tcp://public.easytier.top:11010"
-
-                [flags]
-                """
-        },
-        new RoomConfiguration
-        {
-            GroupName = "测试组",
-            RoomName = "测试房间2",
-            TestIp = "100.100.0.2",
-            ServerConfig = """
-                dhcp = true
-                listeners = [
-                    "tcp://0.0.0.0:11010",
-                    "udp://0.0.0.0:11010",
-                ]
-
-                [network_identity]
-                network_name = "test-network-2"
-                network_secret = "test-secret-2"
-
-                [[peer]]
-                uri = "tcp://public.easytier.top:11010"
-
-                [flags]
-                """
-        },
-        new RoomConfiguration
-        {
-            GroupName = "生产组",
-            RoomName = "生产房间122222222",
+            GroupName = "PAYDAY2",
+            RoomName = "新手房间",
             TestIp = "100.100.1.1",
             ServerConfig = """
                 dhcp = true
+
                 listeners = [
-                    "tcp://0.0.0.0:11010",
-                    "udp://0.0.0.0:11010",
+                    "tcp://0.0.0.0:0",
+                    "udp://0.0.0.0:0",
                 ]
 
                 [network_identity]
@@ -76,31 +34,23 @@ public static class RoomConfigurationList
                 uri = "tcp://pd2.629957.xyz:39647"
 
                 [flags]
+                default_protocol = "tcp"
+
+                multi_thread = true
+
+                disable_sym_hole_punching = true
+
+                disable_kcp_input = true
+
+                disable_quic_input = true
+
+                tcp_whitelist = "0"
+
+                udp_whitelist = "7777-8000"
+                
                 """
         },
-        new RoomConfiguration
-        {
-            GroupName = "生产组",
-            RoomName = "生产房间2",
-            TestIp = "100.100.1.2",
-            ServerConfig = """
-                ipv4 = "100.100.0.0/20"
-                dhcp = false
-                listeners = [
-                    "tcp://0.0.0.0:11020",
-                    "udp://0.0.0.0:11020",
-                ]
-
-                [network_identity]
-                network_name = "prod-network-2"
-                network_secret = "prod-secret-2"
-
-                [[peer]]
-                uri = "tcp://prod-server.example.com:11010"
-
-                [flags]
-                """
-        }
+        
     };
 
     /// <summary>
