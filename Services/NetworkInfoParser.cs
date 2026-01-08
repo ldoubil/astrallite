@@ -12,7 +12,8 @@ public static class NetworkInfoParser
     {
         PropertyNameCaseInsensitive = true,
         AllowTrailingCommas = true,
-        ReadCommentHandling = JsonCommentHandling.Skip
+        ReadCommentHandling = JsonCommentHandling.Skip,
+        NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString
     };
 
     /// <summary>
@@ -57,11 +58,16 @@ public static class NetworkInfoParser
 
         try
         {
+            // 打印准备解析的 JSON（前 1000 个字符）
+            var preview = json.Length > 1000 ? json.Substring(0, 1000) + "..." : json;
+            System.Diagnostics.Debug.WriteLine($"[NetworkInfoParser] Parsing JSON:\n{preview}");
+            
             return JsonSerializer.Deserialize<NetworkInfo>(json, JsonOptions);
         }
         catch (JsonException ex)
         {
             System.Diagnostics.Debug.WriteLine($"[NetworkInfoParser] JSON parse error: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[NetworkInfoParser] Full JSON:\n{json}");
             return null;
         }
     }

@@ -13,8 +13,8 @@ public class NetworkInfo
     [JsonPropertyName("my_node_info")]
     public MyNodeInfo? MyNodeInfo { get; set; }
 
-    [JsonPropertyName("events")]
-    public List<string> Events { get; set; } = new();
+    [JsonIgnore]
+    public string? Events { get; set; }
 
     [JsonPropertyName("routes")]
     public List<RouteInfo> Routes { get; set; } = new();
@@ -219,7 +219,7 @@ public class PeerInfo
     [JsonPropertyName("conns")]
     public List<ConnectionInfo> Connections { get; set; } = new();
 
-    [JsonPropertyName("default_conn_id")]
+    [JsonIgnore]
     public string? DefaultConnId { get; set; }
 
     [JsonPropertyName("directly_connected_conns")]

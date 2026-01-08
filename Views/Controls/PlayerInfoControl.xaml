@@ -41,21 +41,28 @@
                          Padding="0"
                          MaxLength="20"
                          CaretBrush="{DynamicResource PrimaryText}"/>
-                <TextBlock Text="{Binding IpAddress}"
+                
+                <TextBlock Text="{Binding ConnectionStatus}"
                            FontSize="11" 
                            Foreground="{DynamicResource SecondaryText}"
-                           Margin="0,3,0,0"/>
+                           Margin="0,3,0,0"
+                           Visibility="{Binding ConnectionStatusVisibility}"/>
                 
-                <Border Background="#16825D"
-                        CornerRadius="3"
-                        Padding="6,2"
-                        Margin="0,4,0,0"
-                        Visibility="{Binding ConnectionStatusVisibility}"
-                        HorizontalAlignment="Left">
-                    <TextBlock Text="Connected"
-                               FontSize="9"
-                               Foreground="#4EC9B0"/>
-                </Border>
+                <TextBlock Text="{Binding IpAddress}"
+                           FontSize="11" 
+                           Foreground="{DynamicResource TertiaryText}"
+                           Margin="0,3,0,0">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsConnected}" Value="False">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
             </StackPanel>
 
             <Button Grid.Column="2"
