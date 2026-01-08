@@ -20,7 +20,7 @@ namespace AstralLite
         {
             notifyIcon = new NotifyIcon
             {
-                Icon = SystemIcons.Application,
+                Icon = new Icon("icon.ico"),
                 Text = "AstralLite-PD2",
                 Visible = true
             };
