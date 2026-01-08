@@ -1,5 +1,6 @@
 using System.Text.Json;
 using AstralLite.Models.Network;
+using System.Text.RegularExpressions;
 
 namespace AstralLite.Services;
 
@@ -38,6 +39,7 @@ public static class NetworkInfoParser
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[NetworkInfoParser] Failed to parse network '{networkName}': {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[NetworkInfoParser] JSON that failed:\n{jsonString}");
             }
         }
 
@@ -58,18 +60,30 @@ public static class NetworkInfoParser
 
         try
         {
-            // 打印准备解析的 JSON（前 1000 个字符）
-            var preview = json.Length > 1000 ? json.Substring(0, 1000) + "..." : json;
-            System.Diagnostics.Debug.WriteLine($"[NetworkInfoParser] Parsing JSON:\n{preview}");
+            // 预处理：移除 events 数组内容
+            var cleanedJson = RemoveEventsArray(json);
             
-            return JsonSerializer.Deserialize<NetworkInfo>(json, JsonOptions);
+            return JsonSerializer.Deserialize<NetworkInfo>(cleanedJson, JsonOptions);
         }
         catch (JsonException ex)
         {
             System.Diagnostics.Debug.WriteLine($"[NetworkInfoParser] JSON parse error: {ex.Message}");
-            System.Diagnostics.Debug.WriteLine($"[NetworkInfoParser] Full JSON:\n{json}");
+            System.Diagnostics.Debug.WriteLine($"[NetworkInfoParser] Full JSON that caused error:");
+            System.Diagnostics.Debug.WriteLine(json);
             return null;
         }
+    }
+
+    /// <summary>
+    /// 暴力移除 events 数组内容，替换为空数组
+    /// </summary>
+    private static string RemoveEventsArray(string json)
+    {
+        // 使用正则表达式找到 "events":[...] 并替换为 "events":[]
+        var pattern = "\"events\"\\s*:\\s*\\[(?:[^\\[\\]]|\\[(?:[^\\[\\]]|\\[[^\\]]*\\])*\\])*\\]";
+        var replacement = "\"events\":[]";
+        
+        return Regex.Replace(json, pattern, replacement, RegexOptions.Singleline);
     }
 
     /// <summary>
@@ -103,7 +117,6 @@ public static class NetworkInfoParser
         summary.AppendLine($"对等节点: {networkInfo.Peers.Count} 个");
         summary.AppendLine($"路由: {networkInfo.Routes.Count} 条");
 
-        // 显示连接延迟
         if (networkInfo.Peers.Count > 0)
         {
             foreach (var peer in networkInfo.Peers)

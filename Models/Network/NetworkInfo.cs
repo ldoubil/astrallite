@@ -2,9 +2,6 @@ using System.Text.Json.Serialization;
 
 namespace AstralLite.Models.Network;
 
-/// <summary>
-/// 网络信息根对象
-/// </summary>
 public class NetworkInfo
 {
     [JsonPropertyName("dev_name")]
@@ -13,8 +10,8 @@ public class NetworkInfo
     [JsonPropertyName("my_node_info")]
     public MyNodeInfo? MyNodeInfo { get; set; }
 
-    [JsonIgnore]
-    public string? Events { get; set; }
+    [JsonPropertyName("events")]
+    public List<string> Events { get; set; } = new();
 
     [JsonPropertyName("routes")]
     public List<RouteInfo> Routes { get; set; } = new();
@@ -35,13 +32,10 @@ public class NetworkInfo
     public ForeignNetworkSummary? ForeignNetworkSummary { get; set; }
 }
 
-/// <summary>
-/// 本节点信息
-/// </summary>
 public class MyNodeInfo
 {
     [JsonPropertyName("virtual_ipv4")]
-    public string? VirtualIpv4 { get; set; }
+    public InterfaceIp? VirtualIpv4 { get; set; }
 
     [JsonPropertyName("hostname")]
     public string Hostname { get; set; } = string.Empty;
@@ -62,38 +56,29 @@ public class MyNodeInfo
     public string VpnPortalConfig { get; set; } = string.Empty;
 }
 
-/// <summary>
-/// IP 地址信息
-/// </summary>
 public class IpInfo
 {
     [JsonPropertyName("public_ipv4")]
-    public string? PublicIpv4 { get; set; }
+    public InterfaceIp? PublicIpv4 { get; set; }
 
     [JsonPropertyName("interface_ipv4s")]
     public List<InterfaceIp> InterfaceIpv4s { get; set; } = new();
 
     [JsonPropertyName("public_ipv6")]
-    public string? PublicIpv6 { get; set; }
+    public InterfaceIpv6? PublicIpv6 { get; set; }
 
     [JsonPropertyName("interface_ipv6s")]
-    public List<InterfaceIp> InterfaceIpv6s { get; set; } = new();
+    public List<InterfaceIpv6> InterfaceIpv6s { get; set; } = new();
 
     [JsonPropertyName("listeners")]
     public List<object> Listeners { get; set; } = new();
 }
 
-/// <summary>
-/// 网络接口 IP
-/// </summary>
 public class InterfaceIp
 {
     [JsonPropertyName("addr")]
     public long Addr { get; set; }
 
-    /// <summary>
-    /// 将整数地址转换为 IP 字符串
-    /// </summary>
     public string ToIpString()
     {
         var bytes = BitConverter.GetBytes((uint)Addr);
@@ -103,9 +88,36 @@ public class InterfaceIp
     }
 }
 
-/// <summary>
-/// STUN 信息
-/// </summary>
+public class InterfaceIpv6
+{
+    [JsonPropertyName("part1")]
+    public long Part1 { get; set; }
+
+    [JsonPropertyName("part2")]
+    public long Part2 { get; set; }
+
+    [JsonPropertyName("part3")]
+    public long Part3 { get; set; }
+
+    [JsonPropertyName("part4")]
+    public long Part4 { get; set; }
+}
+
+public class ConnIdParts
+{
+    [JsonPropertyName("part1")]
+    public uint Part1 { get; set; }
+
+    [JsonPropertyName("part2")]
+    public uint Part2 { get; set; }
+
+    [JsonPropertyName("part3")]
+    public uint Part3 { get; set; }
+
+    [JsonPropertyName("part4")]
+    public uint Part4 { get; set; }
+}
+
 public class StunInfo
 {
     [JsonPropertyName("udp_nat_type")]
@@ -127,28 +139,22 @@ public class StunInfo
     public int MaxPort { get; set; }
 }
 
-/// <summary>
-/// 监听器信息
-/// </summary>
 public class ListenerInfo
 {
     [JsonPropertyName("url")]
     public string Url { get; set; } = string.Empty;
 }
 
-/// <summary>
-/// 路由信息
-/// </summary>
 public class RouteInfo
 {
     [JsonPropertyName("peer_id")]
     public long PeerId { get; set; }
 
     [JsonPropertyName("ipv4_addr")]
-    public string? Ipv4Addr { get; set; }
+    public InterfaceIp? Ipv4Addr { get; set; }
 
     [JsonPropertyName("ipv6_addr")]
-    public string? Ipv6Addr { get; set; }
+    public InterfaceIpv6? Ipv6Addr { get; set; }
 
     [JsonPropertyName("next_hop_peer_id")]
     public long NextHopPeerId { get; set; }
@@ -187,9 +193,6 @@ public class RouteInfo
     public int PathLatencyLatencyFirst { get; set; }
 }
 
-/// <summary>
-/// 功能标志
-/// </summary>
 public class FeatureFlag
 {
     [JsonPropertyName("is_public_server")]
@@ -208,9 +211,6 @@ public class FeatureFlag
     public bool SupportConnListSync { get; set; }
 }
 
-/// <summary>
-/// 对等节点信息
-/// </summary>
 public class PeerInfo
 {
     [JsonPropertyName("peer_id")]
@@ -219,16 +219,13 @@ public class PeerInfo
     [JsonPropertyName("conns")]
     public List<ConnectionInfo> Connections { get; set; } = new();
 
-    [JsonIgnore]
-    public string? DefaultConnId { get; set; }
+    [JsonPropertyName("default_conn_id")]
+    public ConnIdParts? DefaultConnId { get; set; }
 
     [JsonPropertyName("directly_connected_conns")]
-    public List<string> DirectlyConnectedConns { get; set; } = new();
+    public List<ConnIdParts> DirectlyConnectedConns { get; set; } = new();
 }
 
-/// <summary>
-/// 连接信息
-/// </summary>
 public class ConnectionInfo
 {
     [JsonPropertyName("conn_id")]
@@ -262,9 +259,6 @@ public class ConnectionInfo
     public bool IsClosed { get; set; }
 }
 
-/// <summary>
-/// 隧道信息
-/// </summary>
 public class TunnelInfo
 {
     [JsonPropertyName("tunnel_type")]
@@ -277,18 +271,12 @@ public class TunnelInfo
     public AddressInfo? RemoteAddr { get; set; }
 }
 
-/// <summary>
-/// 地址信息
-/// </summary>
 public class AddressInfo
 {
     [JsonPropertyName("url")]
     public string Url { get; set; } = string.Empty;
 }
 
-/// <summary>
-/// 连接统计信息
-/// </summary>
 public class ConnectionStats
 {
     [JsonPropertyName("rx_bytes")]
@@ -306,15 +294,9 @@ public class ConnectionStats
     [JsonPropertyName("latency_us")]
     public long LatencyUs { get; set; }
 
-    /// <summary>
-    /// 延迟（毫秒）
-    /// </summary>
     public double LatencyMs => LatencyUs / 1000.0;
 }
 
-/// <summary>
-/// 对等节点和路由配对
-/// </summary>
 public class PeerRoutePair
 {
     [JsonPropertyName("route")]
@@ -324,9 +306,6 @@ public class PeerRoutePair
     public PeerInfo? Peer { get; set; }
 }
 
-/// <summary>
-/// 外部网络摘要
-/// </summary>
 public class ForeignNetworkSummary
 {
     [JsonPropertyName("info_map")]
