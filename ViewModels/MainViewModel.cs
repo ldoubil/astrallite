@@ -195,8 +195,11 @@ namespace AstralLite.ViewModels
 
             try
             {
+                // 动态拼接 hostname 配置
+                var configWithHostname = $"hostname = \"{PlayerName}\"\n{room.ServerConfig}";
+
                 // 使用 NetworkService 连接（会自动处理已连接的情况）
-                NetworkService.Instance.Connect(room.ServerConfig);
+                NetworkService.Instance.Connect(configWithHostname);
 
                 IsConnected = true;
                 IpAddress = room.TestIp;
@@ -305,7 +308,7 @@ namespace AstralLite.ViewModels
         }
 
         /// <summary>
-        /// 根据网络信息中的 peers 更新玩家列表
+        /// 根据网络信息中的 peer_route_pairs 更新玩家列表
         /// </summary>
         private void UpdatePlayerList(Dictionary<string, NetworkInfo> parsedInfo)
         {
@@ -320,30 +323,35 @@ namespace AstralLite.ViewModels
 
             foreach (var (networkName, info) in parsedInfo)
             {
-                if (info.Peers == null || info.Peers.Count == 0)
+                if (info.PeerRoutePairs == null || info.PeerRoutePairs.Count == 0)
                 {
                     continue;
                 }
 
-                foreach (var peer in info.Peers)
+                foreach (var peerRoutePair in info.PeerRoutePairs)
                 {
-                    // 从 peer_route_pairs 中查找对应的路由信息以获取主机名
-                    var route = info.PeerRoutePairs
-                        .FirstOrDefault(p => p.Route?.PeerId == peer.PeerId)?.Route;
+                    var route = peerRoutePair.Route;
+                    var peer = peerRoutePair.Peer;
 
-                    string playerName = route?.Hostname ?? $"Peer-{peer.PeerId}";
-                    
-                    // 跳过名字包含 "server" 的节点（不区分大小写）
-                    if (playerName.Contains("server", StringComparison.OrdinalIgnoreCase))
+                    // 跳过没有路由信息的节点
+                    if (route == null)
                     {
-                        System.Diagnostics.Debug.WriteLine($"[MainViewModel] Skipping peer {peer.PeerId} - hostname contains 'server': {playerName}");
+                        System.Diagnostics.Debug.WriteLine($"[MainViewModel] Skipping pair - route is null");
                         continue;
                     }
 
+                    // 跳过 ipv4_addr 为空的节点
+                    if (route.Ipv4Addr == null)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[MainViewModel] Skipping node {route.Hostname} (ID: {route.PeerId}) - ipv4_addr is null");
+                        continue;
+                    }
+
+                    string playerName = route.Hostname ?? $"Peer-{route.PeerId}";
                     string ping = "N/A";
 
-                    // 获取延迟信息
-                    if (peer.Connections.Count > 0)
+                    // 优先从 peer 的连接信息获取延迟
+                    if (peer?.Connections != null && peer.Connections.Count > 0)
                     {
                         var conn = peer.Connections.FirstOrDefault(c => !c.IsClosed);
                         if (conn?.Stats != null)
@@ -351,7 +359,8 @@ namespace AstralLite.ViewModels
                             ping = $"{conn.Stats.LatencyMs:F0}ms";
                         }
                     }
-                    else if (route != null && route.PathLatency > 0)
+                    // 如果没有连接信息，使用路由的延迟
+                    else if (route.PathLatency > 0)
                     {
                         ping = $"{route.PathLatency}ms";
                     }
@@ -361,6 +370,8 @@ namespace AstralLite.ViewModels
                         Name = playerName,
                         Ping = ping
                     });
+
+                    System.Diagnostics.Debug.WriteLine($"[MainViewModel] Added player: {playerName} (ID: {route.PeerId}, IP: {route.Ipv4Addr.ToIpString()}, Ping: {ping})");
                 }
             }
 

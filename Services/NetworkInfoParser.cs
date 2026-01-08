@@ -28,18 +28,23 @@ public static class NetworkInfoParser
 
         foreach (var (networkName, jsonString) in networkInfoDict)
         {
+            System.Diagnostics.Debug.WriteLine($"[NetworkInfoParser] ========== Network: {networkName} ==========");
+            System.Diagnostics.Debug.WriteLine($"[NetworkInfoParser] Raw JSON:");
+            System.Diagnostics.Debug.WriteLine(jsonString);
+            System.Diagnostics.Debug.WriteLine($"[NetworkInfoParser] ======================================");
+
             try
             {
                 var networkInfo = ParseNetworkInfo(jsonString);
                 if (networkInfo != null)
                 {
                     result[networkName] = networkInfo;
+                    System.Diagnostics.Debug.WriteLine($"[NetworkInfoParser] Successfully parsed network '{networkName}'");
                 }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[NetworkInfoParser] Failed to parse network '{networkName}': {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"[NetworkInfoParser] JSON that failed:\n{jsonString}");
             }
         }
 

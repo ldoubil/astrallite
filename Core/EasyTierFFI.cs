@@ -9,11 +9,11 @@ internal static class EasyTierFFI
 {
     private const string DllName = "easytier_ffi.dll";
 
-    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-    internal static extern int parse_config([MarshalAs(UnmanagedType.LPStr)] string cfgStr);
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    internal static extern int parse_config([MarshalAs(UnmanagedType.LPUTF8Str)] string cfgStr);
 
-    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-    internal static extern int run_network_instance([MarshalAs(UnmanagedType.LPStr)] string cfgStr);
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    internal static extern int run_network_instance([MarshalAs(UnmanagedType.LPUTF8Str)] string cfgStr);
 
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
     internal static extern int retain_network_instance(IntPtr instNames, int length);
@@ -42,7 +42,7 @@ internal static class EasyTierFFI
             return "Î´Öª´íÎó";
         }
 
-        string? errorMsg = Marshal.PtrToStringAnsi(errorMsgPtr);
+        string? errorMsg = Marshal.PtrToStringUTF8(errorMsgPtr);
         free_string(errorMsgPtr);
         return errorMsg ?? "Î´Öª´íÎó";
     }

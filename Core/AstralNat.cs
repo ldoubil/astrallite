@@ -107,8 +107,8 @@ public static class AstralNat
                 var kv = Marshal.PtrToStructure<EasyTierFFI.KeyValuePair>(
                     buffer + i * Marshal.SizeOf<EasyTierFFI.KeyValuePair>());
                 
-                string? key = Marshal.PtrToStringAnsi(kv.Key);
-                string? value = Marshal.PtrToStringAnsi(kv.Value);
+                string? key = Marshal.PtrToStringUTF8(kv.Key);
+                string? value = Marshal.PtrToStringUTF8(kv.Value);
 
                 EasyTierFFI.free_string(kv.Key);
                 EasyTierFFI.free_string(kv.Value);
@@ -180,7 +180,7 @@ public static class AstralNat
                     {
                         throw new ArgumentException("实例名称不能为空");
                     }
-                    namePointers[i] = Marshal.StringToHGlobalAnsi(instanceNames[i]);
+                    namePointers[i] = Marshal.StringToCoTaskMemUTF8(instanceNames[i]);
                 }
 
                 namesPtr = Marshal.AllocHGlobal(Marshal.SizeOf<IntPtr>() * namePointers.Length);
@@ -201,7 +201,7 @@ public static class AstralNat
                 {
                     if (ptr != IntPtr.Zero)
                     {
-                        Marshal.FreeHGlobal(ptr);
+                        Marshal.FreeCoTaskMem(ptr);
                     }
                 }
             }
