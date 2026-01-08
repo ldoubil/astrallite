@@ -9,10 +9,33 @@
     <UserControl.Resources>
         <DataTemplate x:Key="RoomItemTemplate">
             <Grid>
-                <TextBlock Text="{Binding RoomName}" 
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <TextBlock Grid.Column="0"
+                           Text="{Binding RoomName}" 
                            FontSize="12" 
                            Foreground="{DynamicResource PrimaryText}"
                            VerticalAlignment="Center"/>
+                
+                <Button Grid.Column="1"
+                        Content="&#21152;&#20837;"
+                        Margin="10,0,0,0"
+                        VerticalAlignment="Center"
+                        Command="{Binding DataContext.JoinRoomCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                        CommandParameter="{Binding}">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource JoinButton}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding DataContext.IsConnected, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
             </Grid>
         </DataTemplate>
         
@@ -33,8 +56,7 @@
                      ItemTemplate="{StaticResource RoomItemTemplate}"
                      SelectionMode="Single"
                      SelectedItem="{Binding SelectedRoom}"
-                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                     MouseDoubleClick="RoomList_DoubleClick">
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                 <ListBox.GroupStyle>
                     <GroupStyle>
                         <GroupStyle.HeaderTemplate>

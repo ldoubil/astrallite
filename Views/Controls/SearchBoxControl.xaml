@@ -18,7 +18,7 @@
                      BorderThickness="1"
                      FontSize="11"
                      CaretBrush="{DynamicResource PrimaryText}"/>
-            <TextBlock Text="Search rooms or players..."
+            <TextBlock 
                        FontSize="11"
                        Foreground="{DynamicResource TertiaryText}"
                        IsHitTestVisible="False"

@@ -10,6 +10,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="H.Firewall" Version="0.9.27" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="easytier_ffi.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

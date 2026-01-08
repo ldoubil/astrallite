@@ -1,6 +1,8 @@
 ﻿using System.Configuration;
 using System.Data;
 using AstralLite.Services;
+using AstralLite.Models;
+using System.Diagnostics;
 
 namespace AstralLite
 {
@@ -9,12 +11,20 @@ namespace AstralLite
     /// </summary>
     public partial class App : System.Windows.Application
     {
+        private ProcessMonitorService? _processMonitorService;
+
         protected override void OnStartup(System.Windows.StartupEventArgs e)
         {
             base.OnStartup(e);
 
-            // 不再自动启动测试示例
-            // 现在由用户通过 UI 手动加入房间
+            // 直接从配置类加载进程监听配置
+            var configs = ProcessMonitorConfigurationList.Processes;
+            if (configs.Count > 0)
+            {
+                _processMonitorService = new ProcessMonitorService(configs);
+                _processMonitorService.ProcessStarted += cfg => Debug.WriteLine($"[ProcessMonitor] {cfg.DisplayName}({cfg.ProcessName}) 已启动");
+                _processMonitorService.ProcessStopped += cfg => Debug.WriteLine($"[ProcessMonitor] {cfg.DisplayName}({cfg.ProcessName}) 已关闭");
+            }
         }
 
         protected override void OnExit(System.Windows.ExitEventArgs e)
@@ -26,6 +36,7 @@ namespace AstralLite
                 {
                     NetworkService.Instance.Disconnect();
                 }
+                _processMonitorService?.Dispose();
             }
             catch (Exception ex)
             {

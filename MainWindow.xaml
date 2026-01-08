@@ -121,7 +121,7 @@
 
             <controls:PlayerInfoControl Grid.Row="1"/>
 
-            <controls:SearchBoxControl Grid.Row="2"/>
+            <controls:SearchBoxControl Grid.Row="2" Visibility="{Binding PlayerListVisibility}"/>
 
             <Grid Grid.Row="3">
                 <controls:RoomListControl/>

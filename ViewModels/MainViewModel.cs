@@ -97,10 +97,16 @@ namespace AstralLite.ViewModels
             {
                 if (SetProperty(ref _searchText, value))
                 {
-                    FilterRooms();
+                    if (PlayerListVisibility == Visibility.Visible)
+                    {
+                        FilterPlayers();
+                    }
                 }
             }
         }
+
+        private ObservableCollection<Player> _filteredPlayers = new();
+        public ObservableCollection<Player> FilteredPlayers => _filteredPlayers;
 
         public string NetworkStatus
         {
@@ -185,6 +191,22 @@ namespace AstralLite.ViewModels
             }
         }
 
+        private void FilterPlayers()
+        {
+            _filteredPlayers.Clear();
+            if (string.IsNullOrWhiteSpace(SearchText))
+            {
+                foreach (var p in Players)
+                    _filteredPlayers.Add(p);
+            }
+            else
+            {
+                var search = SearchText.ToLower();
+                foreach (var p in Players.Where(p => p.Name.ToLower().Contains(search)))
+                    _filteredPlayers.Add(p);
+            }
+        }
+
         private void JoinRoom(RoomConfiguration? room)
         {
             if (room == null || string.IsNullOrWhiteSpace(PlayerName))
@@ -229,9 +251,6 @@ namespace AstralLite.ViewModels
 
         private void LeaveRoom()
         {
-            var result = MessageBox.Show("确定要离开房间吗？", "确认", MessageBoxButton.YesNo, MessageBoxImage.Question);
-            if (result != MessageBoxResult.Yes) return;
-
             try
             {
                 // 使用 NetworkService 断开连接（会自动停止监控）
