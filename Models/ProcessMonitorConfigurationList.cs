@@ -16,7 +16,16 @@ public static class ProcessMonitorConfigurationList
         {
             GroupName = "ä¯ÀÀÆ÷",
             DisplayName = "Chromeä¯ÀÀÆ÷",
-            ProcessName = "chrome"
+            ProcessName = "chrome",
+            LocalPortRules = new List<PortRule>
+            {
+                new PortRule { Protocol = "tcp", Port = "80" },
+                new PortRule { Protocol = "udp", Port = "53" }
+            },
+            RemotePortRules = new List<PortRule>
+            {
+                new PortRule { Protocol = "tcp", Port = "443", RemoteAddress = "0.0.0.0/0" }
+            }
         }
     };
 
