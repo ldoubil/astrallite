@@ -1,0 +1,40 @@
+<UserControl x:Class="AstralLite.Views.Controls.SearchBoxControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d" 
+             d:DesignHeight="50" d:DesignWidth="320">
+    <Border Background="{DynamicResource SearchBackground}" 
+            Padding="15,10" 
+            BorderBrush="{DynamicResource BorderColor}" 
+            BorderThickness="0,0,0,1">
+        <Grid>
+            <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                     Padding="8,6"
+                     Background="{DynamicResource ListBackground}"
+                     Foreground="{DynamicResource PrimaryText}"
+                     BorderBrush="{DynamicResource AccentColor}"
+                     BorderThickness="1"
+                     FontSize="11"
+                     CaretBrush="{DynamicResource PrimaryText}"/>
+            <TextBlock Text="Search rooms or players..."
+                       FontSize="11"
+                       Foreground="{DynamicResource TertiaryText}"
+                       IsHitTestVisible="False"
+                       VerticalAlignment="Center"
+                       Margin="10,0,0,0">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding SearchText}" Value="">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+        </Grid>
+    </Border>
+</UserControl>
