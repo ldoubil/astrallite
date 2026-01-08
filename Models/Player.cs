@@ -90,10 +90,7 @@ namespace AstralLite.Models
         {
             get
             {
-
-                return string.IsNullOrWhiteSpace(TransportSummary)
-                    ? Name
-                    : $"{Name} {TransportSummary}";
+                return Name;
             }
         }
 

@@ -124,7 +124,7 @@ namespace AstralLite.ViewModels
             }
 
             var backups = string.Join(" ", ordered.Skip(1).Select(TransportToShort));
-            return $"{TransportToShort(primary)}(?) / {backups}(?)";
+            return $"{TransportToShort(primary)} / {backups}";
         }
 
         private static TransportKind? DetectTransport(ConnectionInfo conn)
