@@ -5,41 +5,91 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              mc:Ignorable="d">
     
-    <ListBox ItemsSource="{Binding Players}"
-             BorderThickness="0"
-             Background="Transparent"
-             ItemContainerStyle="{StaticResource ListBoxItemStyle}"
-             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-             Visibility="{Binding PlayerListVisibility}">
-        <ListBox.ItemTemplate>
-            <DataTemplate>
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
+    <Grid>
+        <ListBox ItemsSource="{Binding Players}"
+                 BorderThickness="0"
+                 Background="Transparent"
+                 ItemContainerStyle="{StaticResource ListBoxItemStyle}"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                 Visibility="{Binding PlayerListVisibility}">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
 
-                    <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="0,0,12,0" VerticalAlignment="Center">
-                        <Rectangle Width="3" Height="8" Fill="{DynamicResource SignalColor}" Margin="0,0,1,0"/>
-                        <Rectangle Width="3" Height="12" Fill="{DynamicResource SignalColor}" Margin="0,0,1,0"/>
-                        <Rectangle Width="3" Height="16" Fill="{DynamicResource SignalColor}" Margin="0,0,1,0"/>
-                        <Rectangle Width="3" Height="20" Fill="{DynamicResource SignalColor}"/>
+                        <TextBlock Grid.Column="0" 
+                                   Text="{Binding Name}" 
+                                   FontSize="12" 
+                                   Foreground="{DynamicResource PrimaryText}"
+                                   VerticalAlignment="Center"/>
+
+                        <TextBlock Grid.Column="1"
+                                   x:Name="PingText"
+                                   Text="{Binding Ping}"
+                                   FontSize="10"
+                                   Foreground="{DynamicResource SignalColor}"
+                                   VerticalAlignment="Center"
+                                   Margin="12,0,0,0"
+                                   MouseEnter="PingText_MouseEnter"
+                                   MouseLeave="PingText_MouseLeave"
+                                   MouseMove="PingText_MouseMove"/>
+                    </Grid>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <Popup x:Name="NatInfoPopup"
+               Placement="Mouse"
+               AllowsTransparency="True"
+               PopupAnimation="Fade"
+               StaysOpen="True">
+            <Border Background="{DynamicResource HeaderBackground}"
+                    BorderBrush="{DynamicResource AccentColor}"
+                    BorderThickness="2"
+                    CornerRadius="6"
+                    Padding="12,8">
+                <Border.Effect>
+                    <DropShadowEffect Color="Black" 
+                                      Direction="270" 
+                                      ShadowDepth="3" 
+                                      BlurRadius="10" 
+                                      Opacity="0.5"/>
+                </Border.Effect>
+                
+                <StackPanel>
+                    <TextBlock x:Name="NatInfoTitle"
+                               FontSize="11"
+                               FontWeight="Bold"
+                               Foreground="{DynamicResource AccentColor}"
+                               Margin="0,0,0,6"/>
+                    
+                    <StackPanel x:Name="UdpNatPanel" Visibility="Collapsed">
+                        <TextBlock Text="UDP NAT:" 
+                                   FontSize="10" 
+                                   Foreground="{DynamicResource SecondaryText}"
+                                   Margin="0,0,0,2"/>
+                        <TextBlock x:Name="UdpNatText"
+                                   FontSize="10"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource PrimaryText}"
+                                   Margin="0,0,0,6"/>
                     </StackPanel>
-
-                    <TextBlock Grid.Column="1" 
-                               Text="{Binding Name}" 
-                               FontSize="12" 
-                               Foreground="{DynamicResource PrimaryText}"
-                               VerticalAlignment="Center"/>
-
-                    <TextBlock Grid.Column="2"
-                               Text="{Binding Ping}"
-                               FontSize="10"
-                               Foreground="{DynamicResource SignalColor}"
-                               VerticalAlignment="Center"/>
-                </Grid>
-            </DataTemplate>
-        </ListBox.ItemTemplate>
-    </ListBox>
+                    
+                    <StackPanel x:Name="TcpNatPanel" Visibility="Collapsed">
+                        <TextBlock Text="TCP NAT:" 
+                                   FontSize="10" 
+                                   Foreground="{DynamicResource SecondaryText}"
+                                   Margin="0,0,0,2"/>
+                        <TextBlock x:Name="TcpNatText"
+                                   FontSize="10"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource PrimaryText}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Popup>
+    </Grid>
 </UserControl>

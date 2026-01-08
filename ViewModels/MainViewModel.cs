@@ -269,8 +269,6 @@ namespace AstralLite.ViewModels
                     // 网络信息为空，显示"连接中"
                     ConnectionStatus = "连接中...";
                     _isNetworkInfoReceived = false;
-                    
-                    System.Diagnostics.Debug.WriteLine("[MainViewModel] Network info is empty, status: 连接中");
                 }
                 else
                 {
@@ -279,30 +277,24 @@ namespace AstralLite.ViewModels
                     {
                         ConnectionStatus = "已连接";
                         _isNetworkInfoReceived = true;
-                        System.Diagnostics.Debug.WriteLine("[MainViewModel] Network info received, status: 已连接");
                     }
 
-                    // 更新玩家列表（使用 peers）
+                    // 更新玩家列表
                     UpdatePlayerList(parsedInfo);
 
-                    // 更新调试信息
+                    // 更新调试信息（简化）
                     var status = new System.Text.StringBuilder();
-                    status.AppendLine($"[{DateTime.Now:HH:mm:ss}] 网络状态:");
                     
                     foreach (var (networkName, info) in parsedInfo)
                     {
-                        status.AppendLine($"网络: {networkName}");
-                        status.AppendLine($"  对等节点: {info.Peers.Count} 个");
-                        
                         if (info.MyNodeInfo != null)
                         {
-                            status.AppendLine($"  主机: {info.MyNodeInfo.Hostname}");
-                            status.AppendLine($"  版本: {info.MyNodeInfo.Version}");
+                            status.AppendLine($"主机: {info.MyNodeInfo.Hostname}");
                         }
+                        status.AppendLine($"玩家数: {Players.Count}");
                     }
                     
                     NetworkStatus = status.ToString();
-                    System.Diagnostics.Debug.WriteLine(NetworkStatus);
                 }
             });
         }
@@ -318,7 +310,9 @@ namespace AstralLite.ViewModels
             Players.Add(new Player 
             { 
                 Name = PlayerName, 
-                Ping = "0ms" 
+                Ping = "0ms",
+                UdpNatType = string.Empty,
+                TcpNatType = string.Empty
             });
 
             foreach (var (networkName, info) in parsedInfo)
@@ -336,14 +330,12 @@ namespace AstralLite.ViewModels
                     // 跳过没有路由信息的节点
                     if (route == null)
                     {
-                        System.Diagnostics.Debug.WriteLine($"[MainViewModel] Skipping pair - route is null");
                         continue;
                     }
 
                     // 跳过 ipv4_addr 为空的节点
                     if (route.Ipv4Addr == null)
                     {
-                        System.Diagnostics.Debug.WriteLine($"[MainViewModel] Skipping node {route.Hostname} (ID: {route.PeerId}) - ipv4_addr is null");
                         continue;
                     }
 
@@ -365,17 +357,34 @@ namespace AstralLite.ViewModels
                         ping = $"{route.PathLatency}ms";
                     }
 
-                    Players.Add(new Player
+                    // 获取 NAT 类型信息
+                    string udpNatType = string.Empty;
+                    string tcpNatType = string.Empty;
+                    
+                    if (route.StunInfo != null)
+                    {
+                        if (route.StunInfo.UdpNatType > 0)
+                        {
+                            udpNatType = NatTypeHelper.GetNatTypeName(route.StunInfo.UdpNatType);
+                        }
+                        
+                        if (route.StunInfo.TcpNatType > 0)
+                        {
+                            tcpNatType = NatTypeHelper.GetNatTypeName(route.StunInfo.TcpNatType);
+                        }
+                    }
+
+                    var player = new Player
                     {
                         Name = playerName,
-                        Ping = ping
-                    });
-
-                    System.Diagnostics.Debug.WriteLine($"[MainViewModel] Added player: {playerName} (ID: {route.PeerId}, IP: {route.Ipv4Addr.ToIpString()}, Ping: {ping})");
+                        Ping = ping,
+                        UdpNatType = udpNatType,
+                        TcpNatType = tcpNatType
+                    };
+                    
+                    Players.Add(player);
                 }
             }
-
-            System.Diagnostics.Debug.WriteLine($"[MainViewModel] Updated player list: {Players.Count} players");
         }
     }
 }
