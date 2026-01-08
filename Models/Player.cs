@@ -4,10 +4,20 @@ namespace AstralLite.Models
 {
     public class Player : ObservableObject
     {
+        private string _instanceId = string.Empty;
         private string _name = string.Empty;
         private string _ping = string.Empty;
         private string _udpNatType = string.Empty;
         private string _tcpNatType = string.Empty;
+
+        /// <summary>
+        /// 玩家的唯一标识符（InstanceId）
+        /// </summary>
+        public string InstanceId
+        {
+            get => _instanceId;
+            set => SetProperty(ref _instanceId, value);
+        }
 
         public string Name
         {

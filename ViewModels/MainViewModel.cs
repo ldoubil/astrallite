@@ -300,21 +300,36 @@ namespace AstralLite.ViewModels
         }
 
         /// <summary>
-        /// 根据网络信息中的 peer_route_pairs 更新玩家列表
+        /// 根据网络信息中的 peer_route_pairs 动态更新玩家列表（增量更新）
         /// </summary>
         private void UpdatePlayerList(Dictionary<string, NetworkInfo> parsedInfo)
         {
-            Players.Clear();
+            // 收集当前在线的玩家 InstanceId 集合
+            var currentInstanceIds = new HashSet<string>();
+            
+            // 确保本地玩家存在（InstanceId = "local" 表示本地玩家）
+            const string localInstanceId = "local";
+            var localPlayer = Players.FirstOrDefault(p => p.InstanceId == localInstanceId);
+            if (localPlayer == null)
+            {
+                Players.Insert(0, new Player
+                {
+                    InstanceId = localInstanceId,
+                    Name = PlayerName,
+                    Ping = "0ms",
+                    UdpNatType = string.Empty,
+                    TcpNatType = string.Empty
+                });
+            }
+            else
+            {
+                // 更新本地玩家信息（名称可能改变）
+                localPlayer.Name = PlayerName;
+                localPlayer.Ping = "0ms";
+            }
+            currentInstanceIds.Add(localInstanceId); // 本地玩家标记为在线
 
-            // 首先添加本地玩家
-            Players.Add(new Player 
-            { 
-                Name = PlayerName, 
-                Ping = "0ms",
-                UdpNatType = string.Empty,
-                TcpNatType = string.Empty
-            });
-
+            // 遍历网络信息，更新或添加远程玩家
             foreach (var (networkName, info) in parsedInfo)
             {
                 if (info.PeerRoutePairs == null || info.PeerRoutePairs.Count == 0)
@@ -338,6 +353,14 @@ namespace AstralLite.ViewModels
                     {
                         continue;
                     }
+
+                    string instanceId = route.InstanceId;
+                    if (string.IsNullOrEmpty(instanceId))
+                    {
+                        continue; // 跳过没有实例ID的节点
+                    }
+                    
+                    currentInstanceIds.Add(instanceId); // 标记为在线
 
                     string playerName = route.Hostname ?? $"Peer-{route.PeerId}";
                     string ping = "N/A";
@@ -374,15 +397,38 @@ namespace AstralLite.ViewModels
                         }
                     }
 
-                    var player = new Player
-                    {
-                        Name = playerName,
-                        Ping = ping,
-                        UdpNatType = udpNatType,
-                        TcpNatType = tcpNatType
-                    };
+                    // 查找是否已存在该玩家
+                    var existingPlayer = Players.FirstOrDefault(p => p.InstanceId == instanceId);
                     
-                    Players.Add(player);
+                    if (existingPlayer != null)
+                    {
+                        // 玩家已存在，只更新属性（不重绘）
+                        existingPlayer.Name = playerName;
+                        existingPlayer.Ping = ping;
+                        existingPlayer.UdpNatType = udpNatType;
+                        existingPlayer.TcpNatType = tcpNatType;
+                    }
+                    else
+                    {
+                        // 新玩家，添加到列表
+                        Players.Add(new Player
+                        {
+                            InstanceId = instanceId,
+                            Name = playerName,
+                            Ping = ping,
+                            UdpNatType = udpNatType,
+                            TcpNatType = tcpNatType
+                        });
+                    }
+                }
+            }
+
+            // 移除已离线的玩家（不在 currentInstanceIds 中的）
+            for (int i = Players.Count - 1; i >= 0; i--)
+            {
+                if (!currentInstanceIds.Contains(Players[i].InstanceId))
+                {
+                    Players.RemoveAt(i);
                 }
             }
         }
