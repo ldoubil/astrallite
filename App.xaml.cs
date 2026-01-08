@@ -1,5 +1,6 @@
 ﻿using System.Configuration;
 using System.Data;
+using AstralLite.Services;
 
 namespace AstralLite
 {
@@ -12,34 +13,19 @@ namespace AstralLite
         {
             base.OnStartup(e);
 
-            // 在后台线程测试 Example1_SimpleP2P
-            Task.Run(() =>
-            {
-                try
-                {
-                    AstralNatExamples.Example1_SimpleP2P();
-                }
-                catch (Exception ex)
-                {
-                    Dispatcher.Invoke(() =>
-                    {
-                        System.Windows.MessageBox.Show(
-                            $"测试 Example1_SimpleP2P 时出错:\n{ex.Message}",
-                            "测试错误",
-                            System.Windows.MessageBoxButton.OK,
-                            System.Windows.MessageBoxImage.Error
-                        );
-                    });
-                }
-            });
+            // 不再自动启动测试示例
+            // 现在由用户通过 UI 手动加入房间
         }
 
         protected override void OnExit(System.Windows.ExitEventArgs e)
         {
-            // 清理所有网络连接
+            // 确保应用退出时断开网络连接
             try
             {
-                Core.AstralNat.StopAllNetworks();
+                if (NetworkService.Instance.IsConnected)
+                {
+                    NetworkService.Instance.Disconnect();
+                }
             }
             catch (Exception ex)
             {

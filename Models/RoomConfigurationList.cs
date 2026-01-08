@@ -18,7 +18,7 @@ public static class RoomConfigurationList
             RoomName = "测试房间1",
             TestIp = "100.100.0.1",
             ServerConfig = """
-                hostname = "test-room-1"
+                instance_name = "test-room-1"
                 dhcp = true
                 listeners = [
                     "tcp://0.0.0.0:11010",
@@ -41,7 +41,7 @@ public static class RoomConfigurationList
             RoomName = "测试房间2",
             TestIp = "100.100.0.2",
             ServerConfig = """
-                hostname = "test-room-2"
+                instance_name = "test-room-2"
                 dhcp = true
                 listeners = [
                     "tcp://0.0.0.0:11010",
@@ -64,7 +64,7 @@ public static class RoomConfigurationList
             RoomName = "生产房间1",
             TestIp = "100.100.1.1",
             ServerConfig = """
-                hostname = "prod-room-1"
+                instance_name = "prod-room-1"
                 ipv4 = "100.100.0.0/20"
                 dhcp = false
                 listeners = [
@@ -88,7 +88,7 @@ public static class RoomConfigurationList
             RoomName = "生产房间2",
             TestIp = "100.100.1.2",
             ServerConfig = """
-                hostname = "prod-room-2"
+                instance_name = "prod-room-2"
                 ipv4 = "100.100.0.0/20"
                 dhcp = false
                 listeners = [

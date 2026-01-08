@@ -1,5 +1,7 @@
 using AstralLite.Core;
 using AstralLite.Models;
+using AstralLite.Models.Network;
+using AstralLite.Services;
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Input;
@@ -20,10 +22,16 @@ namespace AstralLite.ViewModels
         private bool _playerNameEnabled = true;
         private string _searchText = string.Empty;
         private RoomConfiguration? _selectedRoom;
+        private string _networkStatus = string.Empty;
+        private string _connectionStatus = "未连接";
+        private bool _isNetworkInfoReceived = false;
 
         public MainViewModel()
         {
             InitializeCommands();
+            
+            // 订阅解析后的网络信息更新事件
+            NetworkService.Instance.ParsedNetworkInfoUpdated += OnParsedNetworkInfoUpdated;
         }
 
         #region Properties
@@ -94,6 +102,21 @@ namespace AstralLite.ViewModels
             }
         }
 
+        public string NetworkStatus
+        {
+            get => _networkStatus;
+            set => SetProperty(ref _networkStatus, value);
+        }
+
+        /// <summary>
+        /// 连接状态文本（连接中/已连接）
+        /// </summary>
+        public string ConnectionStatus
+        {
+            get => _connectionStatus;
+            set => SetProperty(ref _connectionStatus, value);
+        }
+
         /// <summary>
         /// 所有房间列表（直接绑定到 RoomConfigurationList）
         /// </summary>
@@ -120,8 +143,6 @@ namespace AstralLite.ViewModels
 
         public ObservableCollection<Player> Players { get; } = new();
 
-        private ObservableCollection<Player> _allPlayers = new();
-
         #endregion
 
         #region Commands
@@ -130,16 +151,6 @@ namespace AstralLite.ViewModels
         public ICommand? LeaveRoomCommand { get; private set; }
 
         #endregion
-
-        private void InitializeCommands()
-        {
-            JoinRoomCommand = new RelayCommand<RoomConfiguration>(JoinRoom, _ => !IsConnected && !string.IsNullOrWhiteSpace(PlayerName));
-            LeaveRoomCommand = new RelayCommand(LeaveRoom, () => IsConnected);
-            
-            // 初始化房间列表
-            FilterRooms();
-        }
-
         private void FilterRooms()
         {
             FilteredRooms.Clear();
@@ -174,8 +185,8 @@ namespace AstralLite.ViewModels
 
             try
             {
-                // 使用房间配置启动网络
-                AstralNat.StartNetwork(room.ServerConfig);
+                // 使用 NetworkService 连接（会自动处理已连接的情况）
+                NetworkService.Instance.Connect(room.ServerConfig);
 
                 IsConnected = true;
                 IpAddress = room.TestIp;
@@ -211,11 +222,12 @@ namespace AstralLite.ViewModels
 
             try
             {
-                // 停止网络连接
-                AstralNat.StopAllNetworks();
+                // 使用 NetworkService 断开连接（会自动停止监控）
+                NetworkService.Instance.Disconnect();
 
                 IsConnected = false;
                 IpAddress = "未连接";
+                NetworkStatus = string.Empty;
                 ConnectionStatusVisibility = Visibility.Collapsed;
                 ActionButtonVisibility = Visibility.Collapsed;
                 RoomListVisibility = Visibility.Visible;
@@ -230,6 +242,31 @@ namespace AstralLite.ViewModels
             {
                 MessageBox.Show($"离开房间失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        private void OnNetworkInfoUpdated(object? sender, Dictionary<string, string> info)
+        {
+            // 在 UI 线程上更新网络状态
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+            {
+                if (info.Count == 0)
+                {
+                    NetworkStatus = "正在连接...";
+                }
+                else
+                {
+                    var status = new System.Text.StringBuilder();
+                    status.AppendLine($"[{DateTime.Now:HH:mm:ss}] 网络状态:");
+                    foreach (var kv in info)
+                    {
+                        status.AppendLine($"  {kv.Key}: {kv.Value}");
+                    }
+                    NetworkStatus = status.ToString();
+                    
+                    // 输出到调试窗口
+                    System.Diagnostics.Debug.WriteLine(NetworkStatus);
+                }
+            });
         }
     }
 }
