@@ -1,265 +1,63 @@
-using AstralLite.Core;
+ï»¿using AstralLite.Core;
 
 namespace AstralLite;
 
 /// <summary>
-/// AstralNat ¾²Ì¬ÀàµÄÊ¹ÓÃÊ¾Àı£¬ÓÃÓÚ EasyTier ÍøÂç¹ÜÀí
+/// AstralNat é™æ€ç±»çš„ä½¿ç”¨ç¤ºä¾‹ï¼Œç”¨äº EasyTier ç½‘ç»œç®¡ç†
 /// </summary>
 public static class AstralNatExamples
 {
     /// <summary>
-    /// Ê¾Àı 1: ¼òµ¥µÄ P2P ×éÍøÁ¬½Ó
+    /// ç¤ºä¾‹ 1: ç®€å•çš„ P2P ç»„ç½‘è¿æ¥
     /// </summary>
     public static void Example1_SimpleP2P()
     {
         try
         {
-            // ´´½¨¼òµ¥ÅäÖÃ
-            string config = AstralNat.CreateSimpleConfig(
-                instanceName: "astral-client",
-                networkName: "astral-network",
-                networkSecret: "your-secret-password",
-                peerUrl: null, // Áô¿ÕÔò×÷Îª·şÎñÆ÷
-                listenPort: 11010
-            );
 
-            // ÑéÖ¤ÅäÖÃ
-            if (AstralNat.ValidateConfig(config))
-            {
-                System.Diagnostics.Debug.WriteLine("? ÅäÖÃÓĞĞ§");
-            }
 
-            // Æô¶¯ÍøÂç
-            AstralNat.StartNetwork(config);
-            System.Diagnostics.Debug.WriteLine("? ÍøÂçÒÑÆô¶¯");
 
-            // µÈ´ı³õÊ¼»¯
-            Thread.Sleep(3000);
-
-            // »ñÈ¡ÍøÂçĞÅÏ¢
-            var info = AstralNat.GetNetworkInfo();
-            System.Diagnostics.Debug.WriteLine("\nÍøÂçĞÅÏ¢:");
-            foreach (var kv in info)
-            {
-                System.Diagnostics.Debug.WriteLine($"  {kv.Key}: {kv.Value}");
-            }
-
-            System.Diagnostics.Debug.WriteLine("\nÍøÂçÕıÔÚÔËĞĞÖĞ... (Ó¦ÓÃÍË³öÊ±»á×Ô¶¯Í£Ö¹)");
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"? ´íÎó: {ex.Message}");
-            throw; // ÖØĞÂÅ×³öÒì³£ÒÔ±ãÔÚ App.xaml.cs ÖĞ²¶»ñ
-        }
-    }
-
-    /// <summary>
-    /// Ê¾Àı 2: ¾ßÓĞ¶à¸ö¶ÔµÈ½ÚµãµÄ¸ß¼¶ÅäÖÃ
-    /// </summary>
-    public static void Example2_AdvancedConfig()
-    {
-        try
-        {
-            // ´´½¨¸ß¼¶ÅäÖÃ
-            string config = AstralNat.CreateAdvancedConfig(
-                instanceName: "astral-node",
-                networkName: "astral-mesh",
-                networkSecret: "super-secret-123",
-                peerUrls: new[]
-                {
-                    "tcp://peer1.example.com:11010",
-                    "udp://peer2.example.com:11010"
-                },
-                listeners: new[]
-                {
+            // å¯åŠ¨ç½‘ç»œ
+            AstralNat.StartNetwork("""
+                hostname = "hostname222"
+                dhcp = true
+                listeners = [
                     "tcp://0.0.0.0:11010",
                     "udp://0.0.0.0:11010",
-                    "wg://0.0.0.0:11011"
-                },
-                enableEncryption: true,
-                enableCompression: true,
-                enableIpv6: false,
-                logLevel: "info"
-            );
+                ]
 
-            // Æô¶¯ÍøÂç
-            AstralNat.StartNetwork(config);
-            Console.WriteLine("¸ß¼¶ÍøÂçÒÑÆô¶¯");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"´íÎó: {ex.Message}");
-        }
-    }
+                [network_identity]
+                network_name = "123qwe"
+                network_secret = "123qwe"
 
-    /// <summary>
-    /// Ê¾Àı 3: ¹ÜÀí¶à¸öÍøÂçÊµÀı
-    /// </summary>
-    public static void Example3_MultipleNetworks()
-    {
-        try
-        {
-            // Æô¶¯µÚÒ»¸öÍøÂç
-            var config1 = AstralNat.CreateSimpleConfig(
-                instanceName: "network-1",
-                networkName: "network-1",
-                networkSecret: "secret-1",
-                listenPort: 11010
-            );
-            AstralNat.StartNetwork(config1);
+                [[peer]]
+                uri = "tcp://public.easytier.top:11010"
 
-            // Æô¶¯µÚ¶ş¸öÍøÂç
-            var config2 = AstralNat.CreateSimpleConfig(
-                instanceName: "network-2",
-                networkName: "network-2",
-                networkSecret: "secret-2",
-                listenPort: 11020
-            );
-            AstralNat.StartNetwork(config2);
+                [flags]
+                """);
 
-            // ÁĞ³ö»î¶¯ÊµÀı
-            var instances = AstralNat.GetActiveInstances();
-            Console.WriteLine($"»î¶¯ÊµÀı: {string.Join(", ", instances)}");
+            System.Diagnostics.Debug.WriteLine("\nç½‘ç»œæ­£åœ¨è¿è¡Œä¸­... (åº”ç”¨é€€å‡ºæ—¶ä¼šè‡ªåŠ¨åœæ­¢)");
 
-            // Í£Ö¹ÌØ¶¨ÍøÂç
-            AstralNat.StopNetwork("network-1");
-            Console.WriteLine("ÒÑÍ£Ö¹ network-1");
-
-            // Í£Ö¹ËùÓĞÊ£ÓàÍøÂç
-            AstralNat.StopAllNetworks();
-            Console.WriteLine("ËùÓĞÍøÂçÒÑÍ£Ö¹");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"´íÎó: {ex.Message}");
-        }
-    }
-
-    /// <summary>
-    /// Ê¾Àı 4: ×Ô¶¨Òå TOML ÅäÖÃ
-    /// </summary>
-    public static void Example4_CustomConfig()
-    {
-        try
-        {
-            // ±àĞ´×Ô¶¨Òå TOML ÅäÖÃ
-            string customConfig = @"
-instance_name = ""astral-custom""
-dhcp = true
-network_name = ""astral-game""
-network_secret = ""game-secret-123""
-
-listeners = [
-    ""tcp://0.0.0.0:11010"",
-    ""udp://0.0.0.0:11010""
-]
-
-peer_urls = [
-    ""tcp://game-server.example.com:11010""
-]
-
-enable_encryption = true
-enable_compression = true
-log_level = ""info""
-";
-
-            // ÑéÖ¤²¢Æô¶¯
-            AstralNat.ValidateConfig(customConfig);
-            AstralNat.StartNetwork(customConfig);
-            Console.WriteLine("×Ô¶¨ÒåÍøÂçÒÑÆô¶¯");
-
-            // ¼à¿ØÍøÂç×´Ì¬
-            for (int i = 0; i < 5; i++)
+            while (true)
             {
-                Thread.Sleep(2000);
+                // ç­‰å¾… 1 ç§’
+                Thread.Sleep(1000);
+
+                // è·å–ç½‘ç»œä¿¡æ¯
                 var info = AstralNat.GetNetworkInfo();
-                Console.WriteLine($"\n[{DateTime.Now:HH:mm:ss}] ÍøÂç×´Ì¬:");
+                System.Diagnostics.Debug.WriteLine($"\n[{DateTime.Now:HH:mm:ss}] ç½‘ç»œä¿¡æ¯:");
                 foreach (var kv in info)
                 {
-                    Console.WriteLine($"  {kv.Key}: {kv.Value}");
+                    System.Diagnostics.Debug.WriteLine($"  {kv.Key}: {kv.Value}");
                 }
             }
-
-            AstralNat.StopAllNetworks();
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"´íÎó: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"? é”™è¯¯: {ex.Message}");
+            throw; // é‡æ–°æŠ›å‡ºå¼‚å¸¸ä»¥ä¾¿åœ¨ App.xaml.cs ä¸­æ•è·
         }
     }
 
-    /// <summary>
-    /// Ê¾Àı 5: Ê¹ÓÃÇ°¼ì²é DLL ¿ÉÓÃĞÔ
-    /// </summary>
-    public static void Example5_CheckDlls()
-    {
-        if (!AstralNat.CheckDllsAvailable())
-        {
-            Console.WriteLine("? EasyTier DLL ²»¿ÉÓÃ!");
-            Console.WriteLine("ÇëÈ·±£ÒÔÏÂÎÄ¼ş´æÔÚ:");
-            Console.WriteLine("  - easytier_ffi.dll");
-            Console.WriteLine("  - wintun.dll");
-            Console.WriteLine("  - Packet.dll");
-            return;
-        }
-
-        Console.WriteLine("? EasyTier DLL ¿ÉÓÃ");
-
-        // ¼ÌĞøÍøÂç²Ù×÷...
-        var config = AstralNat.CreateSimpleConfig(
-            instanceName: "test-network",
-            networkName: "test",
-            networkSecret: "test123"
-        );
-
-        AstralNat.StartNetwork(config);
-        Console.WriteLine("ÍøÂçÆô¶¯³É¹¦");
-
-        Thread.Sleep(2000);
-        AstralNat.StopAllNetworks();
-        Console.WriteLine("ÍøÂçÒÑÍ£Ö¹");
-    }
-
-    /// <summary>
-    /// Ê¾Àı 6: Òì²½ÍøÂç¹ÜÀí
-    /// </summary>
-    public static async Task Example6_AsyncUsage()
-    {
-        try
-        {
-            // Òì²½Æô¶¯ÍøÂç
-            await Task.Run(() =>
-            {
-                var config = AstralNat.CreateSimpleConfig(
-                    instanceName: "async-network",
-                    networkName: "async-network",
-                    networkSecret: "async-secret"
-                );
-                AstralNat.StartNetwork(config);
-            });
-
-            Console.WriteLine("ÍøÂçÒÑÒì²½Æô¶¯");
-
-            // ºóÌ¨¼à¿Ø
-            var monitorTask = Task.Run(async () =>
-            {
-                for (int i = 0; i < 10; i++)
-                {
-                    await Task.Delay(1000);
-                    var info = AstralNat.GetNetworkInfo();
-                    Console.WriteLine($"[{i}] »î¶¯ÊµÀı: {AstralNat.GetActiveInstances().Count}");
-                }
-            });
-
-            await monitorTask;
-
-            // ÇåÀí
-            await Task.Run(() => AstralNat.StopAllNetworks());
-            Console.WriteLine("ÍøÂçÒÑÒì²½Í£Ö¹");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"´íÎó: {ex.Message}");
-        }
-    }
+  
 }

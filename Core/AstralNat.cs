@@ -11,28 +11,6 @@ public static class AstralNat
     private static readonly object _lock = new object();
     private static readonly List<string> _activeInstances = new List<string>();
 
-    /// <summary>
-    /// 验证网络配置而不启动它
-    /// </summary>
-    /// <param name="config">TOML 格式的配置字符串</param>
-    /// <returns>如果配置有效则返回 true</returns>
-    /// <exception cref="ArgumentException">配置为空</exception>
-    /// <exception cref="InvalidOperationException">配置无效</exception>
-    public static bool ValidateConfig(string config)
-    {
-        if (string.IsNullOrWhiteSpace(config))
-        {
-            throw new ArgumentException("配置不能为空", nameof(config));
-        }
-
-        int result = EasyTierFFI.parse_config(config);
-        if (result < 0)
-        {
-            throw new InvalidOperationException($"配置无效: {EasyTierFFI.GetErrorMessage()}");
-        }
-
-        return true;
-    }
 
     /// <summary>
     /// 使用指定的配置启动新的网络实例
@@ -160,96 +138,6 @@ public static class AstralNat
         }
     }
 
-    /// <summary>
-    /// 创建简单的 P2P 组网配置
-    /// </summary>
-    /// <param name="instanceName">唯一的实例名称</param>
-    /// <param name="networkName">网络名称</param>
-    /// <param name="networkSecret">网络密码</param>
-    /// <param name="peerUrl">可选的对等节点 URL</param>
-    /// <param name="listenPort">监听端口（默认: 11010）</param>
-    /// <returns>TOML 配置字符串</returns>
-    public static string CreateSimpleConfig(
-        string instanceName,
-        string networkName,
-        string networkSecret,
-        string? peerUrl = null,
-        int listenPort = 11010)
-    {
-        var sb = new StringBuilder();
-        sb.AppendLine($"instance_name = \"{instanceName}\"");
-        sb.AppendLine("dhcp = true");
-        sb.AppendLine($"listeners = [\"tcp://0.0.0.0:{listenPort}\", \"udp://0.0.0.0:{listenPort}\"]");
-        sb.AppendLine($"network_name = \"{networkName}\"");
-        sb.AppendLine($"network_secret = \"{networkSecret}\"");
-
-        if (!string.IsNullOrWhiteSpace(peerUrl))
-        {
-            sb.AppendLine($"peer_urls = [\"{peerUrl}\"]");
-        }
-
-        return sb.ToString();
-    }
-
-    /// <summary>
-    /// 创建具有更多选项的高级组网配置
-    /// </summary>
-    public static string CreateAdvancedConfig(
-        string instanceName,
-        string networkName,
-        string networkSecret,
-        string[]? peerUrls = null,
-        string[]? listeners = null,
-        bool enableEncryption = true,
-        bool enableCompression = true,
-        bool enableIpv6 = false,
-        string? ipv4 = null,
-        string logLevel = "info")
-    {
-        var sb = new StringBuilder();
-        sb.AppendLine($"instance_name = \"{instanceName}\"");
-        
-        if (string.IsNullOrWhiteSpace(ipv4))
-        {
-            sb.AppendLine("dhcp = true");
-        }
-        else
-        {
-            sb.AppendLine("dhcp = false");
-            sb.AppendLine($"ipv4 = \"{ipv4}\"");
-        }
-
-        // 监听地址
-        if (listeners != null && listeners.Length > 0)
-        {
-            sb.Append("listeners = [");
-            sb.Append(string.Join(", ", listeners.Select(l => $"\"{l}\"")));
-            sb.AppendLine("]");
-        }
-        else
-        {
-            sb.AppendLine("listeners = [\"tcp://0.0.0.0:11010\", \"udp://0.0.0.0:11010\"]");
-        }
-
-        sb.AppendLine($"network_name = \"{networkName}\"");
-        sb.AppendLine($"network_secret = \"{networkSecret}\"");
-
-        // 对等节点 URL
-        if (peerUrls != null && peerUrls.Length > 0)
-        {
-            sb.Append("peer_urls = [");
-            sb.Append(string.Join(", ", peerUrls.Select(p => $"\"{p}\"")));
-            sb.AppendLine("]");
-        }
-
-        // 高级选项
-        sb.AppendLine($"enable_encryption = {enableEncryption.ToString().ToLower()}");
-        sb.AppendLine($"enable_compression = {enableCompression.ToString().ToLower()}");
-        sb.AppendLine($"enable_ipv6 = {enableIpv6.ToString().ToLower()}");
-        sb.AppendLine($"log_level = \"{logLevel}\"");
-
-        return sb.ToString();
-    }
 
     /// <summary>
     /// 检查 EasyTier DLL 是否可用
