@@ -19,10 +19,10 @@ namespace AstralLite.ViewModels
         private Visibility _playerListVisibility = Visibility.Collapsed;
         private bool _playerNameEnabled = true;
         private string _searchText = string.Empty;
+        private RoomConfiguration? _selectedRoom;
 
         public MainViewModel()
         {
-            InitializeRooms();
             InitializeCommands();
         }
 
@@ -89,19 +89,37 @@ namespace AstralLite.ViewModels
             {
                 if (SetProperty(ref _searchText, value))
                 {
-                    FilterRoomsAndPlayers();
+                    FilterRooms();
                 }
             }
         }
 
-        public ObservableCollection<Room> CSGORooms { get; } = new();
-        public ObservableCollection<Room> PD2Rooms { get; } = new();
-        public ObservableCollection<Room> MCRooms { get; } = new();
+        /// <summary>
+        /// 所有房间列表（直接绑定到 RoomConfigurationList）
+        /// </summary>
+        public ObservableCollection<RoomConfiguration> AllRooms => RoomConfigurationList.Rooms;
+
+        /// <summary>
+        /// 过滤后的房间列表
+        /// </summary>
+        public ObservableCollection<RoomConfiguration> FilteredRooms { get; } = new();
+
+        /// <summary>
+        /// 当前选中的房间
+        /// </summary>
+        public RoomConfiguration? SelectedRoom
+        {
+            get => _selectedRoom;
+            set => SetProperty(ref _selectedRoom, value);
+        }
+
+        /// <summary>
+        /// 所有分组列表
+        /// </summary>
+        public IEnumerable<string> Groups => RoomConfigurationList.GetAllGroups();
+
         public ObservableCollection<Player> Players { get; } = new();
 
-        private ObservableCollection<Room> _allCSGORooms = new();
-        private ObservableCollection<Room> _allPD2Rooms = new();
-        private ObservableCollection<Room> _allMCRooms = new();
         private ObservableCollection<Player> _allPlayers = new();
 
         #endregion
@@ -110,82 +128,80 @@ namespace AstralLite.ViewModels
 
         public ICommand? JoinRoomCommand { get; private set; }
         public ICommand? LeaveRoomCommand { get; private set; }
-        public ICommand? MinimizeCommand { get; private set; }
-        public ICommand? CloseCommand { get; private set; }
 
         #endregion
 
         private void InitializeCommands()
         {
-            JoinRoomCommand = new RelayCommand<Room>(JoinRoom, _ => !IsConnected && !string.IsNullOrWhiteSpace(PlayerName));
+            JoinRoomCommand = new RelayCommand<RoomConfiguration>(JoinRoom, _ => !IsConnected && !string.IsNullOrWhiteSpace(PlayerName));
             LeaveRoomCommand = new RelayCommand(LeaveRoom, () => IsConnected);
+            
+            // 初始化房间列表
+            FilterRooms();
         }
 
-        private void InitializeRooms()
+        private void FilterRooms()
         {
-            _allCSGORooms = new ObservableCollection<Room>
-            {
-                new Room { Name = "Dust2 - Competitive", PlayerCount = "8/10", Ping = "15ms", IsHost = false, GameType = "CSGO" },
-                new Room { Name = "Mirage - Casual", PlayerCount = "12/16", Ping = "22ms", IsHost = true, GameType = "CSGO" },
-                new Room { Name = "Inferno - Deathmatch", PlayerCount = "6/20", Ping = "18ms", IsHost = false, GameType = "CSGO" },
-                new Room { Name = "Nuke - Wingman", PlayerCount = "2/4", Ping = "12ms", IsHost = false, GameType = "CSGO" },
-            };
+            FilteredRooms.Clear();
 
-            _allPD2Rooms = new ObservableCollection<Room>
+            if (string.IsNullOrWhiteSpace(SearchText))
             {
-                new Room { Name = "Bank Heist - Overkill", PlayerCount = "3/4", Ping = "25ms", IsHost = true, GameType = "PD2" },
-                new Room { Name = "Jewelry Store - Normal", PlayerCount = "2/4", Ping = "31ms", IsHost = false, GameType = "PD2" },
-                new Room { Name = "Hoxton Breakout - Hard", PlayerCount = "4/4", Ping = "28ms", IsHost = false, GameType = "PD2" },
-            };
-
-            _allMCRooms = new ObservableCollection<Room>
+                foreach (var room in AllRooms)
+                {
+                    FilteredRooms.Add(room);
+                }
+            }
+            else
             {
-                new Room { Name = "Survival - 1.20.1", PlayerCount = "15/20", Ping = "8ms", IsHost = true, GameType = "MC" },
-                new Room { Name = "Creative Build Server", PlayerCount = "8/30", Ping = "12ms", IsHost = false, GameType = "MC" },
-                new Room { Name = "Skyblock Challenge", PlayerCount = "5/10", Ping = "10ms", IsHost = false, GameType = "MC" },
-                new Room { Name = "Modded Adventure", PlayerCount = "3/8", Ping = "45ms", IsHost = false, GameType = "MC" },
-            };
-
-            RefreshRoomLists();
+                var search = SearchText.ToLower();
+                foreach (var room in AllRooms.Where(r =>
+                    r.RoomName.ToLower().Contains(search) ||
+                    r.GroupName.ToLower().Contains(search) ||
+                    r.TestIp.ToLower().Contains(search)))
+                {
+                    FilteredRooms.Add(room);
+                }
+            }
         }
 
-        private void RefreshRoomLists()
-        {
-            CSGORooms.Clear();
-            foreach (var room in _allCSGORooms) CSGORooms.Add(room);
-
-            PD2Rooms.Clear();
-            foreach (var room in _allPD2Rooms) PD2Rooms.Add(room);
-
-            MCRooms.Clear();
-            foreach (var room in _allMCRooms) MCRooms.Add(room);
-        }
-
-        private void JoinRoom(Room? room)
+        private void JoinRoom(RoomConfiguration? room)
         {
             if (room == null || string.IsNullOrWhiteSpace(PlayerName))
             {
-                MessageBox.Show("请输入你的名字", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("请选择房间并输入你的名字", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
-            IsConnected = true;
-            IpAddress = "10.0.0.1";
-            ConnectionStatusVisibility = Visibility.Visible;
-            ActionButtonText = "离开";
-            ActionButtonVisibility = Visibility.Visible;
-            RoomListVisibility = Visibility.Collapsed;
-            PlayerListVisibility = Visibility.Visible;
-            PlayerNameEnabled = false;
+            try
+            {
+                // 使用房间配置启动网络
+                AstralNat.StartNetwork(room.ServerConfig);
 
-            _allPlayers.Clear();
-            _allPlayers.Add(new Player { Name = PlayerName, Ping = "0ms" });
-            _allPlayers.Add(new Player { Name = "ProGamer123", Ping = "15ms" });
-            _allPlayers.Add(new Player { Name = "SnipeKing", Ping = "23ms" });
-            _allPlayers.Add(new Player { Name = "NoobMaster", Ping = "8ms" });
+                IsConnected = true;
+                IpAddress = room.TestIp;
+                ConnectionStatusVisibility = Visibility.Visible;
+                ActionButtonText = "离开";
+                ActionButtonVisibility = Visibility.Visible;
+                RoomListVisibility = Visibility.Collapsed;
+                PlayerListVisibility = Visibility.Visible;
+                PlayerNameEnabled = false;
+                SelectedRoom = room;
 
-            Players.Clear();
-            foreach (var player in _allPlayers) Players.Add(player);
+                // 模拟玩家列表
+                _allPlayers.Clear();
+                _allPlayers.Add(new Player { Name = PlayerName, Ping = "0ms" });
+                _allPlayers.Add(new Player { Name = "Player2", Ping = "15ms" });
+                _allPlayers.Add(new Player { Name = "Player3", Ping = "23ms" });
+
+                Players.Clear();
+                foreach (var player in _allPlayers) Players.Add(player);
+
+                MessageBox.Show($"成功加入房间: {room.RoomName}", "成功", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"加入房间失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void LeaveRoom()
@@ -193,49 +209,26 @@ namespace AstralLite.ViewModels
             var result = MessageBox.Show("确定要离开房间吗？", "确认", MessageBoxButton.YesNo, MessageBoxImage.Question);
             if (result != MessageBoxResult.Yes) return;
 
-            IsConnected = false;
-            IpAddress = "未连接";
-            ConnectionStatusVisibility = Visibility.Collapsed;
-            ActionButtonVisibility = Visibility.Collapsed;
-            RoomListVisibility = Visibility.Visible;
-            PlayerListVisibility = Visibility.Collapsed;
-            PlayerNameEnabled = true;
-
-            Players.Clear();
-            _allPlayers.Clear();
-        }
-
-        private void FilterRoomsAndPlayers()
-        {
-            if (string.IsNullOrWhiteSpace(SearchText))
+            try
             {
-                RefreshRoomLists();
+                // 停止网络连接
+                AstralNat.StopAllNetworks();
+
+                IsConnected = false;
+                IpAddress = "未连接";
+                ConnectionStatusVisibility = Visibility.Collapsed;
+                ActionButtonVisibility = Visibility.Collapsed;
+                RoomListVisibility = Visibility.Visible;
+                PlayerListVisibility = Visibility.Collapsed;
+                PlayerNameEnabled = true;
+                SelectedRoom = null;
+
                 Players.Clear();
-                foreach (var player in _allPlayers) Players.Add(player);
-                return;
+                _allPlayers.Clear();
             }
-
-            var search = SearchText.ToLower();
-
-            if (IsConnected)
+            catch (Exception ex)
             {
-                var filtered = _allPlayers.Where(p => p.Name.ToLower().Contains(search)).ToList();
-                Players.Clear();
-                foreach (var player in filtered) Players.Add(player);
-            }
-            else
-            {
-                CSGORooms.Clear();
-                foreach (var room in _allCSGORooms.Where(r => r.Name.ToLower().Contains(search)))
-                    CSGORooms.Add(room);
-
-                PD2Rooms.Clear();
-                foreach (var room in _allPD2Rooms.Where(r => r.Name.ToLower().Contains(search)))
-                    PD2Rooms.Add(room);
-
-                MCRooms.Clear();
-                foreach (var room in _allMCRooms.Where(r => r.Name.ToLower().Contains(search)))
-                    MCRooms.Add(room);
+                MessageBox.Show($"离开房间失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }

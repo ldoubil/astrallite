@@ -22,7 +22,7 @@
                 </StackPanel>
 
                 <StackPanel Grid.Column="1">
-                    <TextBlock Text="{Binding Name}" 
+                    <TextBlock Text="{Binding RoomName}" 
                                FontSize="12" 
                                Foreground="{DynamicResource PrimaryText}"/>
                     <Grid Margin="0,2,0,0">
@@ -31,11 +31,11 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0"
-                                   Text="{Binding PlayerCount}" 
+                                   Text="{Binding TestIp}" 
                                    FontSize="10" 
                                    Foreground="{DynamicResource TertiaryText}"/>
                         <TextBlock Grid.Column="1"
-                                   Text="{Binding Ping}"
+                                   Text="{Binding GroupName}"
                                    FontSize="10"
                                    Foreground="{DynamicResource SignalColor}"
                                    Margin="10,0,0,0"/>
@@ -44,121 +44,44 @@
 
                 </Grid>
         </DataTemplate>
+        
+        <CollectionViewSource x:Key="GroupedRooms" Source="{Binding FilteredRooms}">
+            <CollectionViewSource.GroupDescriptions>
+                <PropertyGroupDescription PropertyName="GroupName"/>
+            </CollectionViewSource.GroupDescriptions>
+        </CollectionViewSource>
     </UserControl.Resources>
     
-    <ScrollViewer VerticalScrollBarVisibility="Disabled"
+    <ScrollViewer VerticalScrollBarVisibility="Auto"
                   Background="{DynamicResource ListBackground}">
         <StackPanel Visibility="{Binding RoomListVisibility}">
-            <!-- CS:GO -->
-            <Border Background="{DynamicResource HeaderBackground}" 
-                    BorderBrush="{DynamicResource BorderColor}" 
-                    BorderThickness="0,1,0,0"
-                    Cursor="Hand"
-                    MouseLeftButtonDown="GameHeader_Click"
-                    Tag="CSGO">
-                <Grid Margin="15,8">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0"
-                               Text="&#x25BC;" 
-                               FontSize="10" 
-                               Foreground="{DynamicResource SecondaryText}"
-                               VerticalAlignment="Center"
-                               Margin="0,0,8,0"
-                               Tag="CollapseIcon"/>
-                    <TextBlock Grid.Column="1"
-                               Text="Counter-Strike: Global Offensive" 
-                               FontSize="12" 
-                               FontWeight="SemiBold" 
-                               Foreground="{DynamicResource PrimaryText}"
-                               VerticalAlignment="Center"/>
-                </Grid>
-            </Border>
-            <ListBox x:Name="CSGOListBox"
-                     ItemsSource="{Binding CSGORooms}"
+            <ListBox ItemsSource="{Binding Source={StaticResource GroupedRooms}}"
                      BorderThickness="0"
                      Background="Transparent"
                      ItemContainerStyle="{StaticResource ListBoxItemStyle}"
                      ItemTemplate="{StaticResource RoomItemTemplate}"
                      SelectionMode="Single"
+                     SelectedItem="{Binding SelectedRoom}"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                     MouseDoubleClick="RoomList_DoubleClick"/>
-
-            <!-- PayDay 2 -->
-            <Border Background="{DynamicResource HeaderBackground}" 
-                    BorderBrush="{DynamicResource BorderColor}" 
-                    BorderThickness="0,1,0,0"
-                    Cursor="Hand"
-                    MouseLeftButtonDown="GameHeader_Click"
-                    Tag="PD2">
-                <Grid Margin="15,8">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0"
-                               Text="&#x25BC;" 
-                               FontSize="10" 
-                               Foreground="{DynamicResource SecondaryText}"
-                               VerticalAlignment="Center"
-                               Margin="0,0,8,0"
-                               Tag="CollapseIcon"/>
-                    <TextBlock Grid.Column="1"
-                               Text="PayDay 2" 
-                               FontSize="12" 
-                               FontWeight="SemiBold" 
-                               Foreground="{DynamicResource PrimaryText}"
-                               VerticalAlignment="Center"/>
-                </Grid>
-            </Border>
-            <ListBox x:Name="PD2ListBox"
-                     ItemsSource="{Binding PD2Rooms}"
-                     BorderThickness="0"
-                     Background="Transparent"
-                     ItemContainerStyle="{StaticResource ListBoxItemStyle}"
-                     ItemTemplate="{StaticResource RoomItemTemplate}"
-                     SelectionMode="Single"
-                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                     MouseDoubleClick="RoomList_DoubleClick"/>
-
-            <!-- Minecraft -->
-            <Border Background="{DynamicResource HeaderBackground}" 
-                    BorderBrush="{DynamicResource BorderColor}" 
-                    BorderThickness="0,1,0,0"
-                    Cursor="Hand"
-                    MouseLeftButtonDown="GameHeader_Click"
-                    Tag="MC">
-                <Grid Margin="15,8">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0"
-                               Text="&#x25BC;" 
-                               FontSize="10" 
-                               Foreground="{DynamicResource SecondaryText}"
-                               VerticalAlignment="Center"
-                               Margin="0,0,8,0"
-                               Tag="CollapseIcon"/>
-                    <TextBlock Grid.Column="1"
-                               Text="Minecraft" 
-                               FontSize="12" 
-                               FontWeight="SemiBold" 
-                               Foreground="{DynamicResource PrimaryText}"
-                               VerticalAlignment="Center"/>
-                </Grid>
-            </Border>
-            <ListBox x:Name="MCListBox"
-                     ItemsSource="{Binding MCRooms}"
-                     BorderThickness="0"
-                     Background="Transparent"
-                     ItemContainerStyle="{StaticResource ListBoxItemStyle}"
-                     ItemTemplate="{StaticResource RoomItemTemplate}"
-                     SelectionMode="Single"
-                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                     MouseDoubleClick="RoomList_DoubleClick"/>
+                     MouseDoubleClick="RoomList_DoubleClick">
+                <ListBox.GroupStyle>
+                    <GroupStyle>
+                        <GroupStyle.HeaderTemplate>
+                            <DataTemplate>
+                                <Border Background="{DynamicResource HeaderBackground}" 
+                                        BorderBrush="{DynamicResource BorderColor}" 
+                                        BorderThickness="0,1,0,0"
+                                        Padding="15,8">
+                                    <TextBlock Text="{Binding Name}" 
+                                               FontSize="12" 
+                                               FontWeight="SemiBold" 
+                                               Foreground="{DynamicResource PrimaryText}"/>
+                                </Border>
+                            </DataTemplate>
+                        </GroupStyle.HeaderTemplate>
+                    </GroupStyle>
+                </ListBox.GroupStyle>
+            </ListBox>
         </StackPanel>
     </ScrollViewer>
 </UserControl>
