@@ -21,8 +21,8 @@ namespace AstralLite
             notifyIcon = new NotifyIcon
             {
                 Icon = SystemIcons.Application,
-                Text = "AstralLite",
-                Visible = false
+                Text = "AstralLite-PD2",
+                Visible = true
             };
 
             notifyIcon.DoubleClick += (s, e) => ShowWindow();
@@ -57,10 +57,6 @@ namespace AstralLite
             this.Show();
             this.WindowState = WindowState.Normal;
             this.Activate();
-            if (notifyIcon != null)
-            {
-                notifyIcon.Visible = false;
-            }
         }
 
         private void HideToTray()
@@ -69,7 +65,7 @@ namespace AstralLite
             if (notifyIcon != null)
             {
                 notifyIcon.Visible = true;
-                notifyIcon.ShowBalloonTip(1000, "AstralLite", "程序已最小化到系统托盘", ToolTipIcon.Info);
+                notifyIcon.ShowBalloonTip(1000, "AstralLite-PD2", "程序已最小化到系统托盘", ToolTipIcon.Info);
             }
         }
 
@@ -79,6 +75,7 @@ namespace AstralLite
             {
                 notifyIcon.Visible = false;
                 notifyIcon.Dispose();
+                notifyIcon = null; // 防止后续访问
             }
             Application.Current.Shutdown();
         }

@@ -16,7 +16,7 @@ public static class RoomConfigurationList
         new RoomConfiguration
         {
             GroupName = "PAYDAY2",
-            RoomName = "新手房间",
+            RoomName = "公共房间",
             TestIp = "100.100.1.1",
             ServerConfig = """
                 dhcp = true
@@ -25,6 +25,9 @@ public static class RoomConfigurationList
                     "tcp://0.0.0.0:0",
                     "udp://0.0.0.0:0",
                 ]
+
+                tcp_whitelist = ["0"]
+                udp_whitelist = ["7777-8000"]
 
                 [network_identity]
                 network_name = "墌훍疊쭵ギữバὪ"
@@ -35,18 +38,11 @@ public static class RoomConfigurationList
 
                 [flags]
                 default_protocol = "tcp"
-
                 multi_thread = true
-
+                dev_name = "AstralPD2"
                 disable_sym_hole_punching = true
-
                 disable_kcp_input = true
-
                 disable_quic_input = true
-
-                tcp_whitelist = "0"
-
-                udp_whitelist = "7777-8000"
                 
                 """
         },

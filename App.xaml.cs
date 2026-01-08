@@ -1,9 +1,9 @@
-﻿using System.Configuration;
+using System.Configuration;
 using System.Data;
 using AstralLite.Services;
 using AstralLite.Models;
 using System.Diagnostics;
-
+using System.Windows;
 namespace AstralLite
 {
     /// <summary>
@@ -12,24 +12,23 @@ namespace AstralLite
     public partial class App : System.Windows.Application
     {
         private ProcessMonitorService? _processMonitorService;
-
         protected override void OnStartup(System.Windows.StartupEventArgs e)
         {
             base.OnStartup(e);
-
-            // 直接从配置类加载进程监听配置
+            // Load process monitor configuration.
             var configs = ProcessMonitorConfigurationList.Processes;
             if (configs.Count > 0)
             {
                 _processMonitorService = new ProcessMonitorService(configs);
-                _processMonitorService.ProcessStarted += cfg => Debug.WriteLine($"[ProcessMonitor] {cfg.DisplayName}({cfg.ProcessName}) 已启动");
-                _processMonitorService.ProcessStopped += cfg => Debug.WriteLine($"[ProcessMonitor] {cfg.DisplayName}({cfg.ProcessName}) 已关闭");
+                _processMonitorService.ProcessStarted += cfg =>
+                    Debug.WriteLine($"[ProcessMonitor] {cfg.DisplayName}({cfg.ProcessName}) started");
+                _processMonitorService.ProcessStopped += cfg =>
+                    Debug.WriteLine($"[ProcessMonitor] {cfg.DisplayName}({cfg.ProcessName}) stopped");
             }
         }
-
         protected override void OnExit(System.Windows.ExitEventArgs e)
         {
-            // 确保应用退出时断开网络连接
+            // Ensure network disconnect on exit.
             try
             {
                 if (NetworkService.Instance.IsConnected)
@@ -40,9 +39,8 @@ namespace AstralLite
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"清理网络时出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Cleanup error: {ex.Message}");
             }
-
             base.OnExit(e);
         }
     }

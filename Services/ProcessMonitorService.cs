@@ -84,15 +84,14 @@ public class ProcessMonitorService : IDisposable
                 Debug.WriteLine($"[WFP] Port parsing failed: {name}");
                 return;
             }
-            if (!isAnyPort)
-            {
-                Debug.WriteLine($"[WFP] Port filters are not supported by the current H.Wfp rule. Using app-level block: {name}");
-            }
-            if (!string.IsNullOrWhiteSpace(rule.RemoteAddress))
-            {
-                Debug.WriteLine($"[WFP] Remote address filters are not supported by the current H.Wfp rule. Using app-level block: {name}");
-            }
-            var firewall = FirewallRule.CreateBlockRule(name, applicationPath);
+            var firewall = FirewallRule.CreateBlockRule(
+                name,
+                applicationPath,
+                rule.Protocol,
+                ports,
+                isAnyPort,
+                isLocal,
+                rule.RemoteAddress);
             lock (_firewallLock)
             {
                 if (_firewallRules.TryGetValue(name, out var existing))

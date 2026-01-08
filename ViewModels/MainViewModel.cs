@@ -2,6 +2,7 @@ using AstralLite.Core;
 using AstralLite.Models;
 using AstralLite.Models.Network;
 using AstralLite.Services;
+using System;
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Input;
@@ -11,7 +12,7 @@ namespace AstralLite.ViewModels
 {
     public class MainViewModel : ObservableObject
     {
-        private string _playerName = "Player";
+        private string _playerName = GetDefaultPlayerName();
         private string _ipAddress = "未连接";
         private bool _isConnected;
         private Visibility _connectionStatusVisibility = Visibility.Collapsed;
@@ -25,6 +26,8 @@ namespace AstralLite.ViewModels
         private string _networkStatus = string.Empty;
         private string _connectionStatus = "未连接";
         private bool _isNetworkInfoReceived = false;
+        private bool _firewallEnabled;
+        private bool _isFirewallUpdating = false;
 
         public MainViewModel()
         {
@@ -32,6 +35,48 @@ namespace AstralLite.ViewModels
             
             // 订阅解析后的网络信息更新事件
             NetworkService.Instance.ParsedNetworkInfoUpdated += OnParsedNetworkInfoUpdated;
+            RefreshFirewallStatus();
+        }
+        private static string GetDefaultPlayerName()
+        {
+            var name = Environment.UserName;
+            return string.IsNullOrWhiteSpace(name) ? "Player" : name;
+        }
+
+        private void RefreshFirewallStatus()
+        {
+            try
+            {
+                _isFirewallUpdating = true;
+                var enabled = FirewallStatusService.IsFirewallEnabled();
+                SetProperty(ref _firewallEnabled, enabled);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Firewall status check failed: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                _isFirewallUpdating = false;
+            }
+        }
+
+        private void ApplyFirewallSetting(bool enabled)
+        {
+            try
+            {
+                _isFirewallUpdating = true;
+                FirewallStatusService.SetFirewallEnabled(enabled);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Firewall update failed: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                _isFirewallUpdating = false;
+                RefreshFirewallStatus();
+            }
         }
 
         #region Properties
@@ -88,6 +133,19 @@ namespace AstralLite.ViewModels
         {
             get => _playerNameEnabled;
             set => SetProperty(ref _playerNameEnabled, value);
+        }
+
+        
+        public bool FirewallEnabled
+        {
+            get => _firewallEnabled;
+            set
+            {
+                if (SetProperty(ref _firewallEnabled, value) && !_isFirewallUpdating)
+                {
+                    ApplyFirewallSetting(value);
+                }
+            }
         }
 
         public string SearchText
@@ -332,7 +390,7 @@ namespace AstralLite.ViewModels
                 Players.Insert(0, new Player
                 {
                     InstanceId = localInstanceId,
-                    Name = PlayerName,
+                    Name = "??",
                     Ping = "0ms",
                     UdpNatType = string.Empty,
                     TcpNatType = string.Empty
@@ -341,7 +399,7 @@ namespace AstralLite.ViewModels
             else
             {
                 // 更新本地玩家信息（名称可能改变）
-                localPlayer.Name = PlayerName;
+                localPlayer.Name = "??";
                 localPlayer.Ping = "0ms";
             }
             currentInstanceIds.Add(localInstanceId); // 本地玩家标记为在线
@@ -456,3 +514,4 @@ namespace AstralLite.ViewModels
         }
     }
 }
+

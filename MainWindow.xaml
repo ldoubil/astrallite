@@ -7,7 +7,7 @@
         xmlns:controls="clr-namespace:AstralLite.Views.Controls"
         xmlns:vm="clr-namespace:AstralLite.ViewModels"
         mc:Ignorable="d"
-        Title="AstralLite" 
+        Title="AstralLite-PD2" 
         Height="550" Width="320"
         WindowStartupLocation="CenterScreen"
         WindowStyle="None"

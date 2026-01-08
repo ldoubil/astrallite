@@ -65,12 +65,24 @@
                 </TextBlock>
             </StackPanel>
 
-            <Button Grid.Column="2"
-                    Content="{Binding ActionButtonText}"
-                    Command="{Binding LeaveRoomCommand}"
-                    Style="{StaticResource LeaveButton}"
-                    VerticalAlignment="Center"
-                    Visibility="{Binding ActionButtonVisibility}"/>
+            <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="10,0,0,0">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="·À»ðÇ½"
+                               FontSize="11"
+                               Foreground="{DynamicResource SecondaryText}"
+                               VerticalAlignment="Center"/>
+                    <ToggleButton Style="{StaticResource SwitchToggle}"
+                                  IsChecked="{Binding FirewallEnabled}"
+                                  Margin="6,0,0,0"/>
+                </StackPanel>
+
+                <Button Content="{Binding ActionButtonText}"
+                        Command="{Binding LeaveRoomCommand}"
+                        Style="{StaticResource LeaveButton}"
+                        VerticalAlignment="Center"
+                        Margin="0,6,0,0"
+                        Visibility="{Binding ActionButtonVisibility}"/>
+            </StackPanel>
         </Grid>
     </Border>
 </UserControl>
