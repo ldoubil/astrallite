@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using AstralLite.Core;
 
 namespace AstralLite.Models
@@ -10,9 +12,10 @@ namespace AstralLite.Models
         private string _connectionType = string.Empty;
         private string _udpNatType = string.Empty;
         private string _tcpNatType = string.Empty;
+        private string _transportSummary = string.Empty;
 
         /// <summary>
-        /// 玩家的唯一标识符（InstanceId）
+        /// ?????????InstanceId?
         /// </summary>
         public string InstanceId
         {
@@ -23,7 +26,13 @@ namespace AstralLite.Models
         public string Name
         {
             get => _name;
-            set => SetProperty(ref _name, value);
+            set
+            {
+                if (SetProperty(ref _name, value))
+                {
+                    OnPropertyChanged(nameof(DisplayName));
+                }
+            }
         }
 
         public string Ping
@@ -33,7 +42,7 @@ namespace AstralLite.Models
         }
 
         /// <summary>
-        /// 连接类型：直连 或 中转
+        /// ??????? ? ??
         /// </summary>
         public string ConnectionType
         {
@@ -64,9 +73,32 @@ namespace AstralLite.Models
                 }
             }
         }
-        
+
+        public string TransportSummary
+        {
+            get => _transportSummary;
+            set
+            {
+                if (SetProperty(ref _transportSummary, value))
+                {
+                    OnPropertyChanged(nameof(DisplayName));
+                }
+            }
+        }
+
+        public string DisplayName
+        {
+            get
+            {
+
+                return string.IsNullOrWhiteSpace(TransportSummary)
+                    ? Name
+                    : $"{Name} {TransportSummary}";
+            }
+        }
+
         /// <summary>
-        /// 获取工具提示文本
+        /// ????????
         /// </summary>
         public string TooltipText
         {
@@ -76,7 +108,7 @@ namespace AstralLite.Models
                 {
                     return string.Empty;
                 }
-                
+
                 var parts = new List<string>();
                 if (!string.IsNullOrEmpty(UdpNatType))
                 {
@@ -86,8 +118,8 @@ namespace AstralLite.Models
                 {
                     parts.Add($"TCP NAT: {TcpNatType}");
                 }
-                
-                return string.Join("\n", parts);
+
+                return string.Join("", parts);
             }
         }
     }

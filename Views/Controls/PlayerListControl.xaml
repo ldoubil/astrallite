@@ -21,7 +21,7 @@
                         </Grid.ColumnDefinitions>
 
                         <TextBlock Grid.Column="0" 
-                                   Text="{Binding Name}" 
+                                   Text="{Binding DisplayName}" 
                                    FontSize="12" 
                                    Foreground="{DynamicResource PrimaryText}"
                                    VerticalAlignment="Center"/>

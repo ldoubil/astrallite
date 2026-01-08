@@ -4,6 +4,8 @@ using AstralLite.Models.Network;
 using AstralLite.Services;
 using System;
 using System.Collections.ObjectModel;
+using System.Net;
+using System.Net.Sockets;
 using System.Windows;
 using System.Windows.Input;
 using MessageBox = System.Windows.MessageBox;
@@ -78,6 +80,144 @@ namespace AstralLite.ViewModels
                 RefreshFirewallStatus();
             }
         }
+
+        private enum TransportKind
+        {
+            Udp4,
+            Udp6,
+            Tcp4,
+            Tcp6
+        }
+
+        private static string BuildTransportSummary(PeerInfo? peer)
+        {
+            if (peer == null || peer.Connections == null || peer.Connections.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            var kinds = new HashSet<TransportKind>();
+            foreach (var conn in peer.Connections)
+            {
+                if (conn.IsClosed)
+                {
+                    continue;
+                }
+
+                var kind = DetectTransport(conn);
+                if (kind.HasValue)
+                {
+                    kinds.Add(kind.Value);
+                }
+            }
+
+            if (kinds.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            var ordered = kinds.OrderBy(GetTransportWeight).ToList();
+            var primary = ordered[0];
+            if (ordered.Count == 1)
+            {
+                return TransportToShort(primary);
+            }
+
+            var backups = string.Join(" ", ordered.Skip(1).Select(TransportToShort));
+            return $"{TransportToShort(primary)}(?) / {backups}(?)";
+        }
+
+        private static TransportKind? DetectTransport(ConnectionInfo conn)
+        {
+            if (conn.Tunnel == null)
+            {
+                return null;
+            }
+
+            var tunnelType = conn.Tunnel.TunnelType?.ToLowerInvariant();
+            if (tunnelType != "udp" && tunnelType != "tcp")
+            {
+                return null;
+            }
+
+            var localHost = GetHost(conn.Tunnel.LocalAddr?.Url);
+            var remoteHost = GetHost(conn.Tunnel.RemoteAddr?.Url);
+            var host = PickBestHost(remoteHost, localHost);
+
+            if (!IPAddress.TryParse(host, out var ip))
+            {
+                if (!IPAddress.TryParse(localHost, out ip))
+                {
+                    return tunnelType == "udp" ? TransportKind.Udp4 : TransportKind.Tcp4;
+                }
+            }
+
+            var isV6 = ip.AddressFamily == AddressFamily.InterNetworkV6;
+            if (tunnelType == "udp")
+            {
+                return isV6 ? TransportKind.Udp6 : TransportKind.Udp4;
+            }
+
+            return isV6 ? TransportKind.Tcp6 : TransportKind.Tcp4;
+        }
+
+        private static string GetHost(string? url)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                return string.Empty;
+            }
+
+            return Uri.TryCreate(url, UriKind.Absolute, out var uri)
+                ? uri.Host
+                : string.Empty;
+        }
+
+        private static string PickBestHost(string remoteHost, string localHost)
+        {
+            if (!IsWildcardHost(remoteHost))
+            {
+                return remoteHost;
+            }
+
+            if (!IsWildcardHost(localHost))
+            {
+                return localHost;
+            }
+
+            return string.IsNullOrWhiteSpace(remoteHost) ? localHost : remoteHost;
+        }
+
+        private static bool IsWildcardHost(string host)
+        {
+            return string.IsNullOrWhiteSpace(host) || host == "0.0.0.0" || host == "::";
+        }
+
+        private static int GetTransportWeight(TransportKind kind)
+        {
+            return kind switch
+            {
+                TransportKind.Udp4 => 0,
+                TransportKind.Udp6 => 1,
+                TransportKind.Tcp4 => 2,
+                TransportKind.Tcp6 => 3,
+                _ => 100
+            };
+        }
+
+        private static string TransportToShort(TransportKind kind)
+        {
+            return kind switch
+            {
+                TransportKind.Udp4 => "udp4",
+                TransportKind.Udp6 => "udp6",
+                TransportKind.Tcp4 => "tcp4",
+                TransportKind.Tcp6 => "tcp6",
+                _ => kind.ToString().ToLowerInvariant()
+            };
+        }
+
+
 
         #region Properties
 
@@ -390,17 +530,19 @@ namespace AstralLite.ViewModels
                 Players.Insert(0, new Player
                 {
                     InstanceId = localInstanceId,
-                    Name = "??",
+                    Name = "本机",
                     Ping = "0ms",
                     UdpNatType = string.Empty,
-                    TcpNatType = string.Empty
+                    TcpNatType = string.Empty,
+                    TransportSummary = string.Empty
                 });
             }
             else
             {
                 // 更新本地玩家信息（名称可能改变）
-                localPlayer.Name = "??";
+                localPlayer.Name = "本机";
                 localPlayer.Ping = "0ms";
+                localPlayer.TransportSummary = string.Empty;
             }
             currentInstanceIds.Add(localInstanceId); // 本地玩家标记为在线
 
@@ -416,6 +558,7 @@ namespace AstralLite.ViewModels
                 {
                     var route = peerRoutePair.Route;
                     var peer = peerRoutePair.Peer;
+                    var transportSummary = BuildTransportSummary(peer);
 
                     // 跳过没有路由信息的节点
                     if (route == null)
@@ -486,6 +629,7 @@ namespace AstralLite.ViewModels
                         existingPlayer.ConnectionType = connectionType;
                         existingPlayer.UdpNatType = udpNatType;
                         existingPlayer.TcpNatType = tcpNatType;
+                        existingPlayer.TransportSummary = transportSummary;
                     }
                     else
                     {
@@ -497,7 +641,8 @@ namespace AstralLite.ViewModels
                             Ping = ping,
                             ConnectionType = connectionType,
                             UdpNatType = udpNatType,
-                            TcpNatType = tcpNatType
+                            TcpNatType = tcpNatType,
+                            TransportSummary = transportSummary
                         });
                     }
                 }
