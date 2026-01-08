@@ -9,40 +9,11 @@
     <UserControl.Resources>
         <DataTemplate x:Key="RoomItemTemplate">
             <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                
-                <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="0,0,12,0" VerticalAlignment="Center">
-                    <Rectangle Width="3" Height="8" Fill="{DynamicResource SignalColor}" Margin="0,0,1,0"/>
-                    <Rectangle Width="3" Height="12" Fill="{DynamicResource SignalColor}" Margin="0,0,1,0"/>
-                    <Rectangle Width="3" Height="16" Fill="{DynamicResource SignalColor}" Margin="0,0,1,0"/>
-                    <Rectangle Width="3" Height="20" Fill="{DynamicResource SignalColor}"/>
-                </StackPanel>
-
-                <StackPanel Grid.Column="1">
-                    <TextBlock Text="{Binding RoomName}" 
-                               FontSize="12" 
-                               Foreground="{DynamicResource PrimaryText}"/>
-                    <Grid Margin="0,2,0,0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0"
-                                   Text="{Binding TestIp}" 
-                                   FontSize="10" 
-                                   Foreground="{DynamicResource TertiaryText}"/>
-                        <TextBlock Grid.Column="1"
-                                   Text="{Binding GroupName}"
-                                   FontSize="10"
-                                   Foreground="{DynamicResource SignalColor}"
-                                   Margin="10,0,0,0"/>
-                    </Grid>
-                </StackPanel>
-
-                </Grid>
+                <TextBlock Text="{Binding RoomName}" 
+                           FontSize="12" 
+                           Foreground="{DynamicResource PrimaryText}"
+                           VerticalAlignment="Center"/>
+            </Grid>
         </DataTemplate>
         
         <CollectionViewSource x:Key="GroupedRooms" Source="{Binding FilteredRooms}">

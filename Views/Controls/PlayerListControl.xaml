@@ -26,16 +26,20 @@
                                    Foreground="{DynamicResource PrimaryText}"
                                    VerticalAlignment="Center"/>
 
-                        <TextBlock Grid.Column="1"
-                                   x:Name="PingText"
-                                   Text="{Binding Ping}"
-                                   FontSize="10"
-                                   Foreground="{DynamicResource SignalColor}"
-                                   VerticalAlignment="Center"
-                                   Margin="12,0,0,0"
-                                   MouseEnter="PingText_MouseEnter"
-                                   MouseLeave="PingText_MouseLeave"
-                                   MouseMove="PingText_MouseMove"/>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding Ping}"
+                                       FontSize="10"
+                                       Foreground="{DynamicResource SignalColor}"
+                                       Margin="12,0,6,0"
+                                       MouseEnter="PingText_MouseEnter"
+                                       MouseLeave="PingText_MouseLeave"
+                                       MouseMove="PingText_MouseMove"/>
+                            
+                            <TextBlock Text="{Binding ConnectionType}"
+                                       FontSize="10"
+                                       Foreground="{DynamicResource TertiaryText}"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
                     </Grid>
                 </DataTemplate>
             </ListBox.ItemTemplate>

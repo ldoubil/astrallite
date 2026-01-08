@@ -7,6 +7,7 @@ namespace AstralLite.Models
         private string _instanceId = string.Empty;
         private string _name = string.Empty;
         private string _ping = string.Empty;
+        private string _connectionType = string.Empty;
         private string _udpNatType = string.Empty;
         private string _tcpNatType = string.Empty;
 
@@ -29,6 +30,15 @@ namespace AstralLite.Models
         {
             get => _ping;
             set => SetProperty(ref _ping, value);
+        }
+
+        /// <summary>
+        /// 连接类型：直连 或 中转
+        /// </summary>
+        public string ConnectionType
+        {
+            get => _connectionType;
+            set => SetProperty(ref _connectionType, value);
         }
 
         public string UdpNatType

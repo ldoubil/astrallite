@@ -215,8 +215,6 @@ namespace AstralLite.ViewModels
 
                 // 清空玩家列表，等待网络信息更新
                 Players.Clear();
-
-                MessageBox.Show($"正在连接到房间: {room.RoomName}", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
@@ -380,6 +378,9 @@ namespace AstralLite.ViewModels
                         ping = $"{route.PathLatency}ms";
                     }
 
+                    // 根据 route.cost 判断连接类型
+                    string connectionType = route.Cost == 1 ? "直连" : "中转";
+
                     // 获取 NAT 类型信息
                     string udpNatType = string.Empty;
                     string tcpNatType = string.Empty;
@@ -405,6 +406,7 @@ namespace AstralLite.ViewModels
                         // 玩家已存在，只更新属性（不重绘）
                         existingPlayer.Name = playerName;
                         existingPlayer.Ping = ping;
+                        existingPlayer.ConnectionType = connectionType;
                         existingPlayer.UdpNatType = udpNatType;
                         existingPlayer.TcpNatType = tcpNatType;
                     }
@@ -416,6 +418,7 @@ namespace AstralLite.ViewModels
                             InstanceId = instanceId,
                             Name = playerName,
                             Ping = ping,
+                            ConnectionType = connectionType,
                             UdpNatType = udpNatType,
                             TcpNatType = tcpNatType
                         });
