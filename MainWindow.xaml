@@ -112,6 +112,7 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
             <controls:TitleBarControl Grid.Row="0" 
@@ -127,6 +128,13 @@
                 <controls:RoomListControl/>
                 <controls:PlayerListControl/>
             </Grid>
+
+            <Border Grid.Row="4" BorderBrush="{StaticResource BorderColor}" BorderThickness="0,1,0,0" Padding="10,6">
+                <TextBlock Text="{Binding AppVersion}"
+                           Foreground="{StaticResource TertiaryText}"
+                           FontSize="10"
+                           HorizontalAlignment="Right"/>
+            </Border>
         </Grid>
     </Border>
 </Window>
