@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System;
 using System.Drawing;
 using System.Windows;
 using System.Windows.Forms;
@@ -20,7 +21,7 @@ namespace AstralLite
         {
             notifyIcon = new NotifyIcon
             {
-                Icon = new Icon("icon.ico"),
+                Icon = LoadTrayIcon(),
                 Text = "AstralLite-PD2",
                 Visible = true
             };
@@ -40,6 +41,17 @@ namespace AstralLite
             contextMenu.Items.Add(exitMenuItem);
 
             notifyIcon.ContextMenuStrip = contextMenu;
+        }
+
+        private static Icon LoadTrayIcon()
+        {
+            var streamInfo = Application.GetResourceStream(new Uri("pack://application:,,,/icon.ico"));
+            if (streamInfo?.Stream != null)
+            {
+                return new Icon(streamInfo.Stream);
+            }
+
+            return new Icon("icon.ico");
         }
 
         private void TitleBar_MinimizeRequested(object? sender, EventArgs e)
