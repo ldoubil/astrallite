@@ -25,6 +25,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="H.Wfp" Version="0.9.27" />
+    <PackageReference Include="System.Management" Version="7.0.0" />
   </ItemGroup>
   <ItemGroup>
     <None Update="easytier_ffi.dll">

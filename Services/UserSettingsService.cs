@@ -19,38 +19,59 @@ namespace AstralLite.Services
         private sealed class UserSettings
         {
             public string? PlayerName { get; set; }
+            public bool? WfpEnabled { get; set; }
         }
 
         public static string? LoadPlayerName()
+        {
+            var settings = LoadSettings();
+            return settings.PlayerName;
+        }
+
+        public static bool LoadWfpEnabled(bool defaultValue = true)
+        {
+            var settings = LoadSettings();
+            return settings.WfpEnabled ?? defaultValue;
+        }
+
+        public static void SaveWfpEnabled(bool enabled)
+        {
+            var settings = LoadSettings();
+            settings.WfpEnabled = enabled;
+            SaveSettings(settings);
+        }
+
+        public static void SavePlayerName(string? playerName)
+        {
+            var settings = LoadSettings();
+            settings.PlayerName = playerName;
+            SaveSettings(settings);
+        }
+
+        private static UserSettings LoadSettings()
         {
             try
             {
                 if (!File.Exists(SettingsPath))
                 {
-                    return null;
+                    return new UserSettings();
                 }
 
                 var json = File.ReadAllText(SettingsPath);
-                var settings = JsonSerializer.Deserialize<UserSettings>(json);
-                return settings?.PlayerName;
+                return JsonSerializer.Deserialize<UserSettings>(json) ?? new UserSettings();
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"[UserSettings] Failed to load settings: {ex.Message}");
-                return null;
+                return new UserSettings();
             }
         }
 
-        public static void SavePlayerName(string? playerName)
+        private static void SaveSettings(UserSettings settings)
         {
             try
             {
                 Directory.CreateDirectory(SettingsDirectory);
-
-                var settings = new UserSettings
-                {
-                    PlayerName = playerName
-                };
 
                 var json = JsonSerializer.Serialize(settings);
                 File.WriteAllText(SettingsPath, json);

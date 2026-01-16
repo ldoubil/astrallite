@@ -27,7 +27,7 @@ public static class RoomConfigurationList
                 ]
 
                 tcp_whitelist = ["0"]
-                udp_whitelist = ["7777-8000"]
+                udp_whitelist = ["7777-7900"]
 
                 [network_identity]
                 network_name = "墌훍疊쭵ギữバὪ"

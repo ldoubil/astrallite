@@ -13,6 +13,7 @@ public class ProcessMonitorService : IDisposable
     private readonly Dictionary<string, bool> _processStatus = new();
     private readonly Dictionary<string, FirewallRule> _firewallRules = new();
     private readonly object _firewallLock = new();
+    private bool _enabled = true;
     private ThreadingTimer? _timer;
     private readonly int _intervalMs;
     private readonly IEnumerable<ProcessMonitorConfiguration> _configs;
@@ -36,6 +37,13 @@ public class ProcessMonitorService : IDisposable
         foreach (var cfg in _configs)
         {
             bool isRunning = Process.GetProcessesByName(cfg.ProcessName).Any();
+
+            if (!_enabled)
+            {
+                _processStatus[cfg.ProcessName] = isRunning;
+                continue;
+            }
+
             if (!_processStatus[cfg.ProcessName] && isRunning)
             {
                 _processStatus[cfg.ProcessName] = true;
@@ -50,6 +58,11 @@ public class ProcessMonitorService : IDisposable
     }
     private void OnProcessStarted(ProcessMonitorConfiguration cfg)
     {
+        if (!_enabled)
+        {
+            return;
+        }
+
         // Add firewall rules.
         foreach (var rule in cfg.LocalPortRules)
         {
@@ -62,6 +75,11 @@ public class ProcessMonitorService : IDisposable
     }
     private void OnProcessStopped(ProcessMonitorConfiguration cfg)
     {
+        if (!_enabled)
+        {
+            return;
+        }
+
         // Remove firewall rules.
         foreach (var rule in cfg.LocalPortRules)
         {
@@ -127,6 +145,46 @@ public class ProcessMonitorService : IDisposable
         catch (Exception ex)
         {
             Debug.WriteLine($"[WFP] Rule remove failed: {name} - {ex.Message}");
+        }
+    }
+    public void SetEnabled(bool enabled)
+    {
+        if (_enabled == enabled)
+        {
+            return;
+        }
+
+        _enabled = enabled;
+
+        if (!enabled)
+        {
+            ClearFirewallRules();
+            return;
+        }
+
+        ApplyRulesForRunningProcesses();
+    }
+    private void ApplyRulesForRunningProcesses()
+    {
+        foreach (var cfg in _configs)
+        {
+            var isRunning = Process.GetProcessesByName(cfg.ProcessName).Any();
+            _processStatus[cfg.ProcessName] = isRunning;
+            if (isRunning)
+            {
+                OnProcessStarted(cfg);
+            }
+        }
+    }
+    private void ClearFirewallRules()
+    {
+        lock (_firewallLock)
+        {
+            foreach (var firewall in _firewallRules.Values)
+            {
+                firewall.Dispose();
+            }
+            _firewallRules.Clear();
         }
     }
     private static (IReadOnlyCollection<ushort> Ports, bool IsAny) ParsePorts(string portText)
@@ -203,13 +261,6 @@ public class ProcessMonitorService : IDisposable
     public void Dispose()
     {
         _timer?.Dispose();
-        lock (_firewallLock)
-        {
-            foreach (var firewall in _firewallRules.Values)
-            {
-                firewall.Dispose();
-            }
-            _firewallRules.Clear();
-        }
+        ClearFirewallRules();
     }
 }

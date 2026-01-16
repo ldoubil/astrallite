@@ -1,6 +1,7 @@
 using AstralLite.Core;
 using AstralLite.Models.Network;
 using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace AstralLite.Services;
 
@@ -15,6 +16,8 @@ public class NetworkService
     private System.Threading.Timer? _networkMonitor;
     private bool _isConnected;
     private string? _currentRoomConfig;
+    private const int InterfaceMetricRetryCount = 5;
+    private static readonly TimeSpan InterfaceMetricRetryDelay = TimeSpan.FromMilliseconds(500);
 
     private NetworkService()
     {
@@ -58,6 +61,8 @@ public class NetworkService
             
             Debug.WriteLine($"[NetworkService] Starting network with config:\n{config}");
             AstralNat.StartNetwork(config);
+
+            ScheduleInterfaceMetricAdjustment(config);
             
             _isConnected = true;
             _currentRoomConfig = config;
@@ -188,6 +193,70 @@ public class NetworkService
         return result.ToString();
     }
 
+    private void ScheduleInterfaceMetricAdjustment(string config)
+    {
+        var interfaceName = TryGetConfigValue(config, "dev_name");
+        if (string.IsNullOrWhiteSpace(interfaceName))
+        {
+            return;
+        }
+
+        _ = Task.Run(async () =>
+        {
+            var success = await NetworkInterfaceMetricService.EnsureMetricZeroWithWatcherAsync(
+                interfaceName,
+                InterfaceMetricRetryCount,
+                InterfaceMetricRetryDelay);
+
+            if (success)
+            {
+                Debug.WriteLine($"[NetworkService] Interface metric set to 0 for {interfaceName}");
+                return;
+            }
+
+            Debug.WriteLine($"[NetworkService] Failed to set interface metric to 0 for {interfaceName}");
+        });
+    }
+
+    private static string? TryGetConfigValue(string config, string key)
+    {
+        if (string.IsNullOrWhiteSpace(config))
+        {
+            return null;
+        }
+
+        foreach (var line in config.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries))
+        {
+            var trimmed = line.Trim();
+            if (trimmed.Length == 0 || trimmed.StartsWith('#') || trimmed.StartsWith(';'))
+            {
+                continue;
+            }
+
+            if (!trimmed.StartsWith(key, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var eqIndex = trimmed.IndexOf('=');
+            if (eqIndex < 0)
+            {
+                continue;
+            }
+
+            var value = trimmed[(eqIndex + 1)..].Trim();
+            var commentIndex = value.IndexOfAny(new[] { '#', ';' });
+            if (commentIndex >= 0)
+            {
+                value = value[..commentIndex].Trim();
+            }
+
+            return value.Trim().Trim('"');
+        }
+
+        return null;
+    }
+
     /// <summary>
     /// 立即获取当前网络信息（原始字典）
     /// </summary>
@@ -231,3 +300,9 @@ public class NetworkService
         }
     }
 }
+
+
+
+
+
+
