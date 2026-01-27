@@ -40,7 +40,7 @@ namespace AstralLite.ViewModels
 
         public MainViewModel()
         {
-            _playerName = UserSettingsService.LoadPlayerName() ?? GetDefaultPlayerName();
+            _playerName = NormalizePlayerName(UserSettingsService.LoadPlayerName() ?? GetDefaultPlayerName());
             _appVersion = GetAppVersion();
             _playerNameSaveTimer = new DispatcherTimer
             {
@@ -64,6 +64,16 @@ namespace AstralLite.ViewModels
         {
             var name = Environment.UserName;
             return string.IsNullOrWhiteSpace(name) ? "Player" : name;
+        }
+        
+        private static string NormalizePlayerName(string? name)
+        {
+            if (string.IsNullOrEmpty(name))
+            {
+                return string.Empty;
+            }
+
+            return name.Length > 10 ? name.Substring(0, 10) : name;
         }
 
         
@@ -281,6 +291,17 @@ namespace AstralLite.ViewModels
             };
         }
 
+        private static string FormatLossRate(double? lossRate)
+        {
+            if (!lossRate.HasValue || double.IsNaN(lossRate.Value) || double.IsInfinity(lossRate.Value) || lossRate.Value < 0)
+            {
+                return string.Empty;
+            }
+
+            var percentage = lossRate.Value <= 1 ? lossRate.Value * 100 : lossRate.Value;
+            return $"丢包 {percentage:F1}%";
+        }
+
 
 
         #region Properties
@@ -290,7 +311,8 @@ namespace AstralLite.ViewModels
             get => _playerName;
             set
             {
-                if (SetProperty(ref _playerName, value))
+                var normalized = NormalizePlayerName(value);
+                if (SetProperty(ref _playerName, normalized))
                 {
                     SchedulePlayerNameSave();
                 }
@@ -721,7 +743,8 @@ namespace AstralLite.ViewModels
                     Ping = "本机",
                     UdpNatType = string.Empty,
                     TcpNatType = string.Empty,
-                    TransportSummary = string.Empty
+                    TransportSummary = string.Empty,
+                    LossRate = string.Empty
                 });
             }
             else
@@ -730,6 +753,7 @@ namespace AstralLite.ViewModels
                 localPlayer.Name = PlayerName;
                 localPlayer.Ping = "本机";
                 localPlayer.TransportSummary = string.Empty;
+                localPlayer.LossRate = string.Empty;
             }
             currentInstanceIds.Add(localInstanceId); // 本地玩家标记为在线
 
@@ -769,11 +793,13 @@ namespace AstralLite.ViewModels
 
                     string playerName = route.Hostname ?? $"Peer-{route.PeerId}";
                     string ping = "N/A";
+                    string lossRateText = string.Empty;
 
                     // 优先从 peer 的连接信息获取延迟
                     if (peer?.Connections != null && peer.Connections.Count > 0)
                     {
                         var conn = peer.Connections.FirstOrDefault(c => !c.IsClosed);
+                        lossRateText = FormatLossRate(conn?.LossRate);
                         if (conn?.Stats != null)
                         {
                             ping = $"{conn.Stats.LatencyMs:F0}ms";
@@ -817,6 +843,7 @@ namespace AstralLite.ViewModels
                         existingPlayer.UdpNatType = udpNatType;
                         existingPlayer.TcpNatType = tcpNatType;
                         existingPlayer.TransportSummary = transportSummary;
+                        existingPlayer.LossRate = lossRateText;
                     }
                     else
                     {
@@ -829,7 +856,8 @@ namespace AstralLite.ViewModels
                             ConnectionType = connectionType,
                             UdpNatType = udpNatType,
                             TcpNatType = tcpNatType,
-                            TransportSummary = transportSummary
+                            TransportSummary = transportSummary,
+                            LossRate = lossRateText
                         });
                     }
                 }

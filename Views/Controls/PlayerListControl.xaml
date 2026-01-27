@@ -47,6 +47,27 @@
                                            FontSize="9"
                                            Foreground="{DynamicResource AccentColor}"/>
                             </Border>
+                            <Border Margin="6,0,0,0"
+                                    Padding="4,1"
+                                    CornerRadius="4"
+                                    Background="{DynamicResource HeaderBackground}">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding LossRate}" Value="">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding LossRate}" Value="{x:Null}">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <TextBlock Text="{Binding LossRate}"
+                                           FontSize="9"
+                                           Foreground="{DynamicResource SecondaryText}"/>
+                            </Border>
                         </StackPanel>
 
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">

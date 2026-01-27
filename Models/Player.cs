@@ -13,6 +13,7 @@ namespace AstralLite.Models
         private string _udpNatType = string.Empty;
         private string _tcpNatType = string.Empty;
         private string _transportSummary = string.Empty;
+        private string _lossRate = string.Empty;
 
         /// <summary>
         /// ?????????InstanceId?
@@ -84,6 +85,12 @@ namespace AstralLite.Models
                     OnPropertyChanged(nameof(DisplayName));
                 }
             }
+        }
+
+        public string LossRate
+        {
+            get => _lossRate;
+            set => SetProperty(ref _lossRate, value);
         }
 
         public string DisplayName
