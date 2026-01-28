@@ -79,7 +79,7 @@ namespace AstralLite.ViewModels
         
         private static string GetAppVersion()
         {
-            return $"版本 1.1";
+            return $"版本 1.2";
         }
 
         private void RefreshFirewallStatus()

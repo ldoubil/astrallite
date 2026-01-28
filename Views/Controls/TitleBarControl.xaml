@@ -15,7 +15,7 @@
             </Grid.ColumnDefinitions>
 
             <TextBlock Grid.Column="0" 
-                       Text="AstralLite-PD2" 
+                       Text="AstralLite-PD:TH&amp;PD2" 
                        Foreground="{DynamicResource PrimaryText}"
                        FontSize="12"
                        VerticalAlignment="Center"

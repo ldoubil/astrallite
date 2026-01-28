@@ -23,6 +23,23 @@ public static class ProcessMonitorConfigurationList
             }
         },
 
+        new ProcessMonitorConfiguration
+        {
+            GroupName = "game",
+            DisplayName = "Steam",
+            ProcessName = "steam",
+            RequireAnyProcesses = new List<string>
+            {
+                "payday_win32_release",
+                "payday2_win32_release"
+            },
+            LocalPortRules = new List<PortRule>(),
+            RemotePortRules = new List<PortRule>
+            {
+                new PortRule { Protocol = "udp", Port = "3478", RemoteAddress = "0.0.0.0/0" },
+                new PortRule { Protocol = "udp", Port = "4379-4380", RemoteAddress = "0.0.0.0/0" }
+            }
+        },
 
     };
     /// <summary>

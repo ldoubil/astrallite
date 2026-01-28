@@ -10,60 +10,129 @@ namespace AstralLite.Services;
 /// </summary>
 public class ProcessMonitorService : IDisposable
 {
-    private readonly Dictionary<string, bool> _processStatus = new();
+    private readonly Dictionary<string, bool> _processStatus = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, FirewallRule> _firewallRules = new();
+    private readonly Dictionary<ProcessMonitorConfiguration, bool> _rulesApplied = new();
+    private readonly HashSet<string> _trackedProcessNames = new(StringComparer.OrdinalIgnoreCase);
     private readonly object _firewallLock = new();
     private bool _enabled = true;
     private ThreadingTimer? _timer;
     private readonly int _intervalMs;
-    private readonly IEnumerable<ProcessMonitorConfiguration> _configs;
+    private readonly IReadOnlyList<ProcessMonitorConfiguration> _configs;
     public event Action<ProcessMonitorConfiguration>? ProcessStarted;
     public event Action<ProcessMonitorConfiguration>? ProcessStopped;
     public ProcessMonitorService(IEnumerable<ProcessMonitorConfiguration> configs, int intervalMs = 1000)
     {
-        _configs = configs;
+        _configs = configs.ToList();
         _intervalMs = intervalMs;
-        foreach (var cfg in configs)
+        foreach (var cfg in _configs)
         {
-            _processStatus[cfg.ProcessName] = false;
+            NormalizeConfig(cfg);
+        }
+        foreach (var name in BuildTrackedProcessNames(_configs))
+        {
+            _trackedProcessNames.Add(name);
+            _processStatus[name] = false;
+        }
+        foreach (var cfg in _configs)
+        {
+            _rulesApplied[cfg] = false;
         }
         _timer = new ThreadingTimer(CheckProcesses, null, 0, _intervalMs);
-        // Wire up handlers.
-        this.ProcessStarted += OnProcessStarted;
-        this.ProcessStopped += OnProcessStopped;
     }
     private void CheckProcesses(object? state)
     {
-        foreach (var cfg in _configs)
-        {
-            bool isRunning = Process.GetProcessesByName(cfg.ProcessName).Any();
-
-            if (!_enabled)
-            {
-                _processStatus[cfg.ProcessName] = isRunning;
-                continue;
-            }
-
-            if (!_processStatus[cfg.ProcessName] && isRunning)
-            {
-                _processStatus[cfg.ProcessName] = true;
-                ProcessStarted?.Invoke(cfg);
-            }
-            else if (_processStatus[cfg.ProcessName] && !isRunning)
-            {
-                _processStatus[cfg.ProcessName] = false;
-                ProcessStopped?.Invoke(cfg);
-            }
-        }
-    }
-    private void OnProcessStarted(ProcessMonitorConfiguration cfg)
-    {
         if (!_enabled)
         {
+            UpdateProcessStatuses(false);
             return;
         }
 
-        // Add firewall rules.
+        if (UpdateProcessStatuses(true))
+        {
+            EvaluateRules();
+        }
+    }
+    private bool UpdateProcessStatuses(bool fireEvents)
+    {
+        var changed = false;
+        var changedNames = fireEvents ? new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase) : null;
+        foreach (var processName in _trackedProcessNames)
+        {
+            var isRunning = Process.GetProcessesByName(processName).Any();
+            if (!_processStatus.TryGetValue(processName, out var wasRunning) || wasRunning != isRunning)
+            {
+                _processStatus[processName] = isRunning;
+                changed = true;
+                changedNames?.Add(processName, isRunning);
+            }
+        }
+        if (fireEvents && changedNames?.Count > 0)
+        {
+            foreach (var cfg in _configs)
+            {
+                if (changedNames.TryGetValue(cfg.ProcessName, out var isRunning))
+                {
+                    if (isRunning)
+                    {
+                        ProcessStarted?.Invoke(cfg);
+                    }
+                    else
+                    {
+                        ProcessStopped?.Invoke(cfg);
+                    }
+                }
+            }
+        }
+        return changed;
+    }
+    private void EvaluateRules()
+    {
+        foreach (var cfg in _configs)
+        {
+            var shouldApply = ShouldApplyRules(cfg);
+            var isApplied = _rulesApplied.TryGetValue(cfg, out var applied) && applied;
+            if (shouldApply == isApplied)
+            {
+                continue;
+            }
+            if (shouldApply)
+            {
+                ApplyRules(cfg);
+            }
+            else
+            {
+                RemoveRules(cfg);
+            }
+            _rulesApplied[cfg] = shouldApply;
+        }
+    }
+    private bool ShouldApplyRules(ProcessMonitorConfiguration cfg)
+    {
+        if (!IsProcessRunning(cfg.ProcessName))
+        {
+            return false;
+        }
+        if (cfg.RequireAllProcesses.Count > 0 && cfg.RequireAllProcesses.Any(name => !IsProcessRunning(name)))
+        {
+            return false;
+        }
+        if (cfg.RequireAnyProcesses.Count > 0 && !cfg.RequireAnyProcesses.Any(IsProcessRunning))
+        {
+            return false;
+        }
+        return true;
+    }
+    private bool IsProcessRunning(string processName)
+    {
+        if (string.IsNullOrWhiteSpace(processName))
+        {
+            return false;
+        }
+        return _processStatus.TryGetValue(processName, out var isRunning) && isRunning;
+    }
+    private void ApplyRules(ProcessMonitorConfiguration cfg)
+    {
         foreach (var rule in cfg.LocalPortRules)
         {
             AddFirewallRule(cfg, rule, true);
@@ -73,14 +142,8 @@ public class ProcessMonitorService : IDisposable
             AddFirewallRule(cfg, rule, false);
         }
     }
-    private void OnProcessStopped(ProcessMonitorConfiguration cfg)
+    private void RemoveRules(ProcessMonitorConfiguration cfg)
     {
-        if (!_enabled)
-        {
-            return;
-        }
-
-        // Remove firewall rules.
         foreach (var rule in cfg.LocalPortRules)
         {
             RemoveFirewallRule(cfg, rule, true);
@@ -159,22 +222,14 @@ public class ProcessMonitorService : IDisposable
         if (!enabled)
         {
             ClearFirewallRules();
+            foreach (var cfg in _configs)
+            {
+                _rulesApplied[cfg] = false;
+            }
             return;
         }
-
-        ApplyRulesForRunningProcesses();
-    }
-    private void ApplyRulesForRunningProcesses()
-    {
-        foreach (var cfg in _configs)
-        {
-            var isRunning = Process.GetProcessesByName(cfg.ProcessName).Any();
-            _processStatus[cfg.ProcessName] = isRunning;
-            if (isRunning)
-            {
-                OnProcessStarted(cfg);
-            }
-        }
+        UpdateProcessStatuses(false);
+        EvaluateRules();
     }
     private void ClearFirewallRules()
     {
@@ -186,6 +241,32 @@ public class ProcessMonitorService : IDisposable
             }
             _firewallRules.Clear();
         }
+    }
+    private static HashSet<string> BuildTrackedProcessNames(IEnumerable<ProcessMonitorConfiguration> configs)
+    {
+        var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var cfg in configs)
+        {
+            if (!string.IsNullOrWhiteSpace(cfg.ProcessName))
+            {
+                names.Add(cfg.ProcessName);
+            }
+            foreach (var name in cfg.RequireAllProcesses)
+            {
+                if (!string.IsNullOrWhiteSpace(name))
+                {
+                    names.Add(name);
+                }
+            }
+            foreach (var name in cfg.RequireAnyProcesses)
+            {
+                if (!string.IsNullOrWhiteSpace(name))
+                {
+                    names.Add(name);
+                }
+            }
+        }
+        return names;
     }
     private static (IReadOnlyCollection<ushort> Ports, bool IsAny) ParsePorts(string portText)
     {
@@ -257,6 +338,40 @@ public class ProcessMonitorService : IDisposable
             Debug.WriteLine($"[WFP] Failed to resolve process path: {cfg.ProcessName} - {ex.Message}");
         }
         return $"{cfg.ProcessName}.exe";
+    }
+    private static void NormalizeConfig(ProcessMonitorConfiguration cfg)
+    {
+        cfg.ProcessName = NormalizeProcessName(cfg.ProcessName);
+        cfg.RequireAllProcesses = NormalizeProcessList(cfg.RequireAllProcesses);
+        cfg.RequireAnyProcesses = NormalizeProcessList(cfg.RequireAnyProcesses);
+    }
+    private static string NormalizeProcessName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return string.Empty;
+        }
+        var trimmed = name.Trim();
+        return trimmed.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)
+            ? trimmed[..^4]
+            : trimmed;
+    }
+    private static List<string> NormalizeProcessList(List<string>? names)
+    {
+        if (names == null || names.Count == 0)
+        {
+            return new List<string>();
+        }
+        var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var name in names)
+        {
+            var normalized = NormalizeProcessName(name);
+            if (!string.IsNullOrWhiteSpace(normalized))
+            {
+                set.Add(normalized);
+            }
+        }
+        return set.ToList();
     }
     public void Dispose()
     {

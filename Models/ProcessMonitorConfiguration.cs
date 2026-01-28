@@ -21,6 +21,15 @@ public class ProcessMonitorConfiguration
     /// 要监听的进程名（不带.exe）
     /// </summary>
     public string ProcessName { get; set; } = string.Empty;
+    /// <summary>
+    /// 规则生效需同时满足的额外进程（全部运行才生效）
+    /// </summary>
+    public List<string> RequireAllProcesses { get; set; } = new();
+
+    /// <summary>
+    /// 规则生效需满足的额外进程（任意一个运行即可）
+    /// </summary>
+    public List<string> RequireAnyProcesses { get; set; } = new();
 
     /// <summary>
     /// 需要自动管理的本地端口规则
