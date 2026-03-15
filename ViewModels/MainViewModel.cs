@@ -36,6 +36,7 @@ namespace AstralLite.ViewModels
         private bool _isWfpUpdating = false;
         private bool _relayModeEnabled;
         private string _appVersion = string.Empty;
+        private int _filterCount;
         private readonly DispatcherTimer _playerNameSaveTimer;
 
         public MainViewModel()
@@ -56,6 +57,16 @@ namespace AstralLite.ViewModels
             
             // 订阅解析后的网络信息更新事件
             NetworkService.Instance.ParsedNetworkInfoUpdated += OnParsedNetworkInfoUpdated;
+            
+            // 订阅过滤器数量变化事件
+            var monitor = GetProcessMonitorService();
+            if (monitor != null)
+            {
+                monitor.FilterCountChanged += (s, count) => 
+                    System.Windows.Application.Current?.Dispatcher.Invoke(() => FilterCount = count);
+                FilterCount = monitor.FilterCount;
+            }
+            
             RefreshFirewallStatus();
             InitializeWfpMode();
         }
@@ -79,7 +90,7 @@ namespace AstralLite.ViewModels
         
         private static string GetAppVersion()
         {
-            return $"版本 1.2";
+            return $"版本 1.3";
         }
 
         private void RefreshFirewallStatus()
@@ -344,6 +355,12 @@ namespace AstralLite.ViewModels
             set => SetProperty(ref _appVersion, value);
         }
 
+        public int FilterCount
+        {
+            get => _filterCount;
+            set => SetProperty(ref _filterCount, value);
+        }
+
         public Visibility ConnectionStatusVisibility
         {
             get => _connectionStatusVisibility;
@@ -477,6 +494,7 @@ namespace AstralLite.ViewModels
         public ICommand? JoinRoomCommand { get; private set; }
         public ICommand? LeaveRoomCommand { get; private set; }
         public ICommand? TogglePlayerNameEditCommand { get; private set; }
+        public ICommand? OpenDebugWindowCommand { get; private set; }
 
         #endregion
 
@@ -485,9 +503,19 @@ namespace AstralLite.ViewModels
             JoinRoomCommand = new RelayCommand<RoomConfiguration>(JoinRoom, _ => !IsConnected && !string.IsNullOrWhiteSpace(PlayerName));
             LeaveRoomCommand = new RelayCommand(LeaveRoom, () => IsConnected);
             TogglePlayerNameEditCommand = new RelayCommand(TogglePlayerNameEdit, () => !IsConnected);
+            OpenDebugWindowCommand = new RelayCommand(OpenDebugWindow);
             
             // 初始化房间列表
             FilterRooms();
+        }
+        
+        private void OpenDebugWindow()
+        {
+            var debugWindow = new Views.DebugWindow
+            {
+                Owner = System.Windows.Application.Current.MainWindow
+            };
+            debugWindow.Show();
         }
 
         private void SchedulePlayerNameSave()
@@ -731,6 +759,27 @@ namespace AstralLite.ViewModels
             // 收集当前在线的玩家 InstanceId 集合
             var currentInstanceIds = new HashSet<string>();
             
+            // 获取本地玩家的 NAT 类型
+            string localUdpNatType = string.Empty;
+            string localTcpNatType = string.Empty;
+            
+            foreach (var (networkName, info) in parsedInfo)
+            {
+                if (info.MyNodeInfo?.StunInfo != null)
+                {
+                    if (info.MyNodeInfo.StunInfo.UdpNatType > 0)
+                    {
+                        localUdpNatType = NatTypeHelper.GetNatTypeName(info.MyNodeInfo.StunInfo.UdpNatType);
+                    }
+                    
+                    if (info.MyNodeInfo.StunInfo.TcpNatType > 0)
+                    {
+                        localTcpNatType = NatTypeHelper.GetNatTypeName(info.MyNodeInfo.StunInfo.TcpNatType);
+                    }
+                    break;
+                }
+            }
+            
             // 确保本地玩家存在（InstanceId = "local" 表示本地玩家）
             const string localInstanceId = "local";
             var localPlayer = Players.FirstOrDefault(p => p.InstanceId == localInstanceId);
@@ -741,17 +790,19 @@ namespace AstralLite.ViewModels
                     InstanceId = localInstanceId,
                     Name = PlayerName,
                     Ping = "本机",
-                    UdpNatType = string.Empty,
-                    TcpNatType = string.Empty,
+                    UdpNatType = localUdpNatType,
+                    TcpNatType = localTcpNatType,
                     TransportSummary = string.Empty,
                     LossRate = string.Empty
                 });
             }
             else
             {
-                // 更新本地玩家信息（名称可能改变）
+                // 更新本地玩家信息（名称和 NAT 类型可能改变）
                 localPlayer.Name = PlayerName;
                 localPlayer.Ping = "本机";
+                localPlayer.UdpNatType = localUdpNatType;
+                localPlayer.TcpNatType = localTcpNatType;
                 localPlayer.TransportSummary = string.Empty;
                 localPlayer.LossRate = string.Empty;
             }

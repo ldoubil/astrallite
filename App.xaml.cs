@@ -35,7 +35,6 @@ namespace AstralLite
                 return;
             }
             base.OnStartup(e);
-            // Load process monitor configuration.
             var configs = ProcessMonitorConfigurationList.Processes;
             if (configs.Count > 0)
             {
@@ -50,6 +49,12 @@ namespace AstralLite
                 "AstralPD2",
                 10,
                 TimeSpan.FromMilliseconds(500));
+        }
+        
+        public void OpenDebugWindow()
+        {
+            var debugWindow = new Views.DebugWindow();
+            debugWindow.Show();
         }
         protected override void OnExit(System.Windows.ExitEventArgs e)
         {

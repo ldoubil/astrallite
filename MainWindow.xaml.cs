@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Windows;
 using Application = System.Windows.Application;
 
@@ -12,6 +12,12 @@ namespace AstralLite
         {
             InitializeComponent();
             InitializeTrayIcon();
+            Loaded += MainWindow_Loaded;
+        }
+
+        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            (Application.Current as App)?.OpenDebugWindow();
         }
 
         private void InitializeTrayIcon()
@@ -19,7 +25,7 @@ namespace AstralLite
             notifyIcon = new NotifyIcon
             {
                 Icon = LoadTrayIcon(),
-                Text = "AstralLite-PD2",
+                Text = "Astral-收获日联机工具",
                 Visible = true
             };
 
@@ -74,7 +80,7 @@ namespace AstralLite
             if (notifyIcon != null)
             {
                 notifyIcon.Visible = true;
-                notifyIcon.ShowBalloonTip(1000, "AstralLite-PD2", "程序已最小化到系统托盘", ToolTipIcon.Info);
+                notifyIcon.ShowBalloonTip(1000, "Astral-收获日联机工具", "程序已最小化到系统托盘", ToolTipIcon.Info);
             }
         }
 

@@ -27,7 +27,7 @@ public static class RoomConfigurationList
                 ]
 
                 tcp_whitelist = ["0"]
-                udp_whitelist = ["7777-7900"]
+                udp_whitelist = ["0"]
 
                 [network_identity]
                 network_name = "墌훍疊쭵ギữバὪ"
@@ -39,7 +39,7 @@ public static class RoomConfigurationList
                 [flags]
                 default_protocol = "tcp"
                 multi_thread = true
-                dev_name = "AstralPD2"
+                dev_name = "AstralPD"
                 disable_sym_hole_punching = true
                 disable_kcp_input = true
                 disable_quic_input = true
